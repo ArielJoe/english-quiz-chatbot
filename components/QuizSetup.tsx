@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 import {
   LEVELS,
   QUIZ_REQUEST_TYPES,
@@ -31,73 +29,12 @@ const typeLabels: Record<QuizRequestType, string> = {
   mixed: "Campuran"
 };
 
-const countOptions = [5, 10] as const;
-
 interface QuizSetupProps {
   config: QuizGenerationRequest;
   error: string;
   isLoading: boolean;
   onChange: (config: QuizGenerationRequest) => void;
   onStart: (config: QuizGenerationRequest) => void;
-}
-
-interface QuestionCountPickerProps {
-  count: number;
-  onChange: (count: number) => void;
-}
-
-function QuestionCountPicker({ count, onChange }: QuestionCountPickerProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div
-      className="relative grid max-w-xs gap-2 text-sm font-semibold text-slate-800"
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) {
-          setIsOpen(false);
-        }
-      }}
-    >
-      <span>Berapa jumlah soal?</span>
-      <button
-        type="button"
-        className="flex items-center justify-between rounded-xl border-2 border-slate-200 bg-white px-3 py-2 text-left text-slate-950 outline-none transition hover:border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-        onClick={() => setIsOpen((open) => !open)}
-      >
-        <span>{count} soal</span>
-        <span className="text-xs text-slate-500">{isOpen ? "^" : "v"}</span>
-      </button>
-
-      {isOpen && (
-        <div
-          className="absolute left-0 top-full z-10 mt-2 w-full overflow-hidden rounded-md border border-slate-200 bg-white shadow-lg"
-          role="listbox"
-        >
-          {countOptions.map((option) => (
-            <button
-              key={option}
-              type="button"
-              className={`block w-full px-3 py-2 text-left text-sm transition ${
-                count === option
-                  ? "bg-brand-500 font-bold text-white"
-                  : "text-slate-800 hover:bg-brand-50"
-              }`}
-              role="option"
-              aria-selected={count === option}
-              onClick={() => {
-                onChange(option);
-                setIsOpen(false);
-              }}
-            >
-              {option} soal
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 }
 
 export function QuizSetup({
@@ -180,11 +117,6 @@ export function QuizSetup({
           ))}
         </div>
       </fieldset>
-
-      <QuestionCountPicker
-        count={config.count}
-        onChange={(count) => onChange({ ...config, count })}
-      />
 
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">

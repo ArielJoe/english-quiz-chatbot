@@ -35,7 +35,7 @@ const initialRequest: QuizGenerationRequest = {
   level: "beginner",
   subtopic: "grammar",
   type: "multiple_choice",
-  count: 10,
+  count: 5,
 };
 
 function getErrorMessage(error: unknown): string {
