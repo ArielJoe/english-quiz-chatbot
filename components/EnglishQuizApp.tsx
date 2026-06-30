@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ChatSupport } from "@/components/ChatSupport";
 import { FeedbackScreen } from "@/components/FeedbackScreen";
@@ -14,6 +14,7 @@ import { QuizSetup } from "@/components/QuizSetup";
 import { SummaryScreen } from "@/components/SummaryScreen";
 import { gradeAnswer } from "@/lib/grading";
 import { postJsonWithRateLimitRetry } from "@/lib/http";
+import { findTypoSuggestion } from "@/lib/typo";
 import type {
   ChatQuizContext,
   Question,
@@ -26,6 +27,7 @@ type ViewState = "setup" | "quiz" | "feedback" | "summary";
 
 interface MascotSpeech {
   mood: MascotMood;
+  source: "clue" | "typo";
   text: string;
 }
 
@@ -201,6 +203,7 @@ export function EnglishQuizApp() {
     clueTokenRef.current = token;
     setMascotSpeech({
       mood: "quiz",
+      source: "clue",
       text: "Sebentar, Lingo siapkan petunjuknya...",
     });
 
@@ -215,12 +218,13 @@ export function EnglishQuizApp() {
       );
 
       if (clueTokenRef.current === token) {
-        setMascotSpeech({ mood: "quiz", text: response.message });
+        setMascotSpeech({ mood: "quiz", source: "clue", text: response.message });
       }
     } catch {
       if (clueTokenRef.current === token) {
         setMascotSpeech({
           mood: "quiz",
+          source: "clue",
           text: "Maaf, Lingo belum bisa memberi petunjuk sekarang. Silakan coba lagi sebentar lagi.",
         });
       }
@@ -232,6 +236,41 @@ export function EnglishQuizApp() {
   const baseMood = getMascotMood(view, isGenerating, latestResult);
   const mascotMood = mascotSpeech?.mood ?? baseMood;
   const mascotMessage = mascotSpeech?.text ?? getMascotMessage(baseMood);
+
+  // Saat mengisi fill-in-blank, Lingo otomatis menyarankan koreksi bila
+  // jawaban yang diketik tampak seperti salah ketik dari kata yang benar.
+  useEffect(() => {
+    if (
+      view !== "quiz" ||
+      !currentQuestion ||
+      currentQuestion.type !== "fill_in_blank"
+    ) {
+      return;
+    }
+
+    const candidates = [
+      currentQuestion.correct_answer,
+      ...currentQuestion.acceptable_answers,
+    ];
+
+    const handle = window.setTimeout(() => {
+      const suggestion = findTypoSuggestion(currentAnswer, candidates);
+
+      if (suggestion) {
+        setMascotSpeech({
+          mood: "quiz",
+          source: "typo",
+          text: `Sepertinya ada salah ketik. Mungkin maksud Anda "${suggestion}"?`,
+        });
+      } else {
+        setMascotSpeech((previous) =>
+          previous?.source === "typo" ? null : previous,
+        );
+      }
+    }, 600);
+
+    return () => window.clearTimeout(handle);
+  }, [currentAnswer, currentQuestion, view]);
 
   return (
     <main className="flex min-h-screen flex-col px-4 pt-4 sm:px-6 lg:h-screen lg:overflow-hidden lg:px-8">
