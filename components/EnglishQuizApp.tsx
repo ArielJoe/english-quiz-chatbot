@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { ChatSupport } from "@/components/ChatSupport";
 import { FeedbackScreen } from "@/components/FeedbackScreen";
@@ -15,12 +15,19 @@ import { SummaryScreen } from "@/components/SummaryScreen";
 import { gradeAnswer } from "@/lib/grading";
 import { postJsonWithRateLimitRetry } from "@/lib/http";
 import type {
+  ChatQuizContext,
+  Question,
   Quiz,
   QuizAnswerResult,
   QuizGenerationRequest,
 } from "@/types/quiz";
 
 type ViewState = "setup" | "quiz" | "feedback" | "summary";
+
+interface MascotSpeech {
+  mood: MascotMood;
+  text: string;
+}
 
 const initialRequest: QuizGenerationRequest = {
   level: "beginner",
@@ -64,19 +71,30 @@ function getMascotMood(
 function getMascotMessage(mood: MascotMood): string {
   switch (mood) {
     case "loading":
-      return "Aku lagi nyusun soal yang pas. Tunggu sebentar, ya.";
+      return "Mohon tunggu sebentar, saya sedang menyiapkan soal untuk Anda.";
     case "quiz":
-      return "Kalau mentok, minta clue dulu. Aku bantu kasih arah tanpa membocorkan jawaban.";
+      return "Jika menemui kesulitan, silakan minta clue. Saya akan memberi arah tanpa membocorkan jawaban.";
     case "correct":
-      return "Benar. Simpan pola jawabannya, biasanya muncul lagi di bentuk soal lain.";
+      return "Bagus, jawaban Anda tepat. Mari lanjutkan ke soal berikutnya.";
     case "wrong":
-      return "Belum pas. Coba cek kata kunci dan bandingkan dengan jawaban yang benar.";
+      return "Belum tepat, tidak apa-apa. Cermati kembali kata kuncinya pada soal berikutnya.";
     case "summary":
-      return "Selesai. Cek bagian yang sering meleset, itu bahan latihan berikutnya.";
+      return "Latihan selesai. Mari tinjau bagian yang masih bisa ditingkatkan.";
     case "idle":
     default:
-      return "Pilih level, topik, dan jumlah soal. Nanti aku temani dari awal sampai selesai.";
+      return "Halo, saya Lingo. Silakan pilih level, topik, dan jumlah soal, lalu kita mulai latihannya.";
   }
+}
+
+function toClueContext(question: Question): ChatQuizContext {
+  return {
+    question: question.question,
+    type: question.type,
+    options: question.options,
+    level: question.level,
+    subtopic: question.subtopic,
+    skill_tag: question.skill_tag,
+  };
 }
 
 export function EnglishQuizApp() {
@@ -89,12 +107,19 @@ export function EnglishQuizApp() {
   const [results, setResults] = useState<QuizAnswerResult[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
-  const [quickChatPrompt, setQuickChatPrompt] = useState("");
+  const [mascotSpeech, setMascotSpeech] = useState<MascotSpeech | null>(null);
+  const clueTokenRef = useRef(0);
+
+  function clearMascotSpeech() {
+    clueTokenRef.current += 1;
+    setMascotSpeech(null);
+  }
 
   async function startQuiz(config: QuizGenerationRequest) {
     setIsGenerating(true);
     setError("");
     setRequestConfig(config);
+    clearMascotSpeech();
 
     try {
       const generatedQuiz = await postJsonWithRateLimitRetry<Quiz>(
@@ -132,33 +157,14 @@ export function EnglishQuizApp() {
         isCorrect,
       },
     ]);
+    clearMascotSpeech();
     setView("feedback");
-  }
-
-  function replaceCurrentQuestion() {
-    setQuiz((currentQuiz) => {
-      if (
-        !currentQuiz ||
-        currentQuiz.questions.length <= 1 ||
-        currentIndex >= currentQuiz.questions.length - 1
-      ) {
-        return currentQuiz;
-      }
-
-      const beforeCurrent = currentQuiz.questions.slice(0, currentIndex);
-      const currentQuestionToMove = currentQuiz.questions[currentIndex];
-      const afterCurrent = currentQuiz.questions.slice(currentIndex + 1);
-
-      return {
-        ...currentQuiz,
-        questions: [...beforeCurrent, ...afterCurrent, currentQuestionToMove],
-      };
-    });
-    setCurrentAnswer("");
   }
 
   function goToNextQuestion() {
     if (!quiz) return;
+
+    clearMascotSpeech();
 
     if (currentIndex >= quiz.questions.length - 1) {
       setView("summary");
@@ -171,6 +177,7 @@ export function EnglishQuizApp() {
   }
 
   function retrySameQuiz() {
+    clearMascotSpeech();
     setCurrentIndex(0);
     setCurrentAnswer("");
     setResults([]);
@@ -178,6 +185,7 @@ export function EnglishQuizApp() {
   }
 
   function newQuiz() {
+    clearMascotSpeech();
     setQuiz(null);
     setCurrentIndex(0);
     setCurrentAnswer("");
@@ -186,29 +194,64 @@ export function EnglishQuizApp() {
     setView("setup");
   }
 
-  function askForClue() {
-    setQuickChatPrompt(
-      "Bantu kasih clue untuk soal ini, tapi jangan kasih jawaban langsung.",
-    );
+  async function askForClue() {
+    if (!currentQuestion) return;
+
+    const token = clueTokenRef.current + 1;
+    clueTokenRef.current = token;
+    setMascotSpeech({
+      mood: "quiz",
+      text: "Sebentar, Lingo siapkan petunjuknya...",
+    });
+
+    try {
+      const response = await postJsonWithRateLimitRetry<{ message: string }>(
+        "/api/chat-support",
+        {
+          message:
+            "Tolong beri satu petunjuk singkat untuk membantu saya menjawab soal ini, tanpa menyebutkan jawabannya secara langsung.",
+          quizContext: toClueContext(currentQuestion),
+        },
+      );
+
+      if (clueTokenRef.current === token) {
+        setMascotSpeech({ mood: "quiz", text: response.message });
+      }
+    } catch {
+      if (clueTokenRef.current === token) {
+        setMascotSpeech({
+          mood: "quiz",
+          text: "Maaf, Lingo belum bisa memberi petunjuk sekarang. Silakan coba lagi sebentar lagi.",
+        });
+      }
+    }
   }
 
   const currentQuestion = quiz?.questions[currentIndex] ?? null;
   const latestResult = results[results.length - 1] ?? null;
-  const mascotMood = getMascotMood(view, isGenerating, latestResult);
+  const baseMood = getMascotMood(view, isGenerating, latestResult);
+  const mascotMood = mascotSpeech?.mood ?? baseMood;
+  const mascotMessage = mascotSpeech?.text ?? getMascotMessage(baseMood);
 
   return (
-    <main className="min-h-screen px-4 pb-44 pt-6 sm:px-6 lg:px-8 lg:pb-6">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <header className="flex flex-col justify-between gap-3 border-b border-slate-200 pb-5 md:flex-row md:items-end">
+    <main className="flex min-h-screen flex-col px-4 pt-4 sm:px-6 lg:h-screen lg:overflow-hidden lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 pb-4 lg:min-h-0">
+        <header className="flex shrink-0 items-center gap-3 border-b border-slate-200 pb-4">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-500 text-xl font-black text-white shadow-[0_4px_0_#387f06]">
+            L
+          </span>
           <div>
-            <h1 className="mt-2 text-3xl font-bold text-slate-950 sm:text-4xl">
-              English Quiz Chatbot
+            <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+              Lingo<span className="text-brand-500">fy</span>
             </h1>
+            <p className="text-sm font-semibold text-slate-500">
+              Kuis Bahasa Inggris bareng Lingo
+            </p>
           </div>
         </header>
 
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_390px]">
-          <section className="h-fit self-start rounded-lg border border-slate-200 bg-white p-4 shadow-panel sm:p-6">
+        <div className="grid grid-cols-1 gap-6 lg:min-h-0 lg:flex-1 lg:grid-rows-1 lg:grid-cols-[7fr_3fr]">
+          <section className="rounded-2xl border-2 border-slate-200 bg-white p-4 shadow-panel sm:p-6 lg:min-h-0 lg:min-w-0 lg:overflow-y-auto">
             {view === "setup" && isGenerating && <QuizLoadingSkeleton />}
 
             {view === "setup" && !isGenerating && (
@@ -225,7 +268,7 @@ export function EnglishQuizApp() {
               <QuizScreen
                 answer={currentAnswer}
                 onAnswerChange={setCurrentAnswer}
-                onReplaceQuestion={replaceCurrentQuestion}
+                onAskClue={askForClue}
                 onSubmit={submitAnswer}
                 question={currentQuestion}
                 questionIndex={currentIndex}
@@ -253,20 +296,11 @@ export function EnglishQuizApp() {
             )}
           </section>
 
-          <ChatSupport
-            question={currentQuestion}
-            quickPrompt={quickChatPrompt}
-            onQuickPromptConsumed={() => setQuickChatPrompt("")}
-          />
+          <ChatSupport question={currentQuestion} />
         </div>
       </div>
 
-      <MascotAssistant
-        canAskClue={view === "quiz" && Boolean(currentQuestion)}
-        message={getMascotMessage(mascotMood)}
-        mood={mascotMood}
-        onAskClue={askForClue}
-      />
+      <MascotAssistant message={mascotMessage} mood={mascotMood} />
     </main>
   );
 }

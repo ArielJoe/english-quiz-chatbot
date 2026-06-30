@@ -58,10 +58,10 @@ function QuestionCountPicker({ count, onChange }: QuestionCountPickerProps) {
         }
       }}
     >
-      <span>Mau berapa soal?</span>
+      <span>Berapa jumlah soal?</span>
       <button
         type="button"
-        className="flex items-center justify-between rounded-md border border-slate-300 bg-white px-3 py-2 text-left text-slate-950 outline-none transition hover:border-slate-500 focus:border-slate-950 focus:ring-2 focus:ring-slate-200"
+        className="flex items-center justify-between rounded-xl border-2 border-slate-200 bg-white px-3 py-2 text-left text-slate-950 outline-none transition hover:border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         onClick={() => setIsOpen((open) => !open)}
@@ -81,8 +81,8 @@ function QuestionCountPicker({ count, onChange }: QuestionCountPickerProps) {
               type="button"
               className={`block w-full px-3 py-2 text-left text-sm transition ${
                 count === option
-                  ? "bg-slate-950 font-bold text-white"
-                  : "text-slate-800 hover:bg-slate-100"
+                  ? "bg-brand-500 font-bold text-white"
+                  : "text-slate-800 hover:bg-brand-50"
               }`}
               role="option"
               aria-selected={count === option}
@@ -111,22 +111,22 @@ export function QuizSetup({
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-xl font-bold text-slate-950">
-          Mau latihan apa hari ini?
+          Apa yang ingin Anda latih hari ini?
         </h2>
       </div>
 
       <fieldset className="grid gap-3">
         <legend className="text-sm font-semibold text-slate-800">
-          Mulai dari level mana?
+          Pilih level
         </legend>
         <div className="grid gap-2 sm:grid-cols-3">
           {LEVELS.map((level) => (
             <button
               key={level}
               type="button"
-              className={`rounded-md border px-4 py-3 text-left text-sm font-semibold transition ${
+              className={`rounded-xl border-2 px-4 py-3 text-left text-sm font-semibold transition ${
                 config.level === level
-                  ? "border-teal-600 bg-teal-50 text-teal-900"
+                  ? "border-brand-500 bg-brand-50 text-brand-900"
                   : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
               }`}
               onClick={() => onChange({ ...config, level })}
@@ -139,16 +139,16 @@ export function QuizSetup({
 
       <fieldset className="grid gap-3">
         <legend className="text-sm font-semibold text-slate-800">
-          Topik yang mau dilatih
+          Pilih topik
         </legend>
         <div className="grid gap-2 sm:grid-cols-2">
           {SUBTOPICS.map((subtopic) => (
             <button
               key={subtopic}
               type="button"
-              className={`rounded-md border px-4 py-3 text-left text-sm font-semibold transition ${
+              className={`rounded-xl border-2 px-4 py-3 text-left text-sm font-semibold transition ${
                 config.subtopic === subtopic
-                  ? "border-sky-600 bg-sky-50 text-sky-900"
+                  ? "border-brand-500 bg-brand-50 text-brand-900"
                   : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
               }`}
               onClick={() => onChange({ ...config, subtopic })}
@@ -161,16 +161,16 @@ export function QuizSetup({
 
       <fieldset className="grid gap-3">
         <legend className="text-sm font-semibold text-slate-800">
-          Model soalnya
+          Tipe soal
         </legend>
         <div className="grid gap-2 sm:grid-cols-3">
           {QUIZ_REQUEST_TYPES.map((type) => (
             <button
               key={type}
               type="button"
-              className={`rounded-md border px-4 py-3 text-left text-sm font-semibold transition ${
+              className={`rounded-xl border-2 px-4 py-3 text-left text-sm font-semibold transition ${
                 config.type === type
-                  ? "border-amber-500 bg-amber-50 text-amber-950"
+                  ? "border-brand-500 bg-brand-50 text-brand-900"
                   : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
               }`}
               onClick={() => onChange({ ...config, type })}
@@ -194,11 +194,11 @@ export function QuizSetup({
 
       <button
         type="button"
-        className="inline-flex w-full items-center justify-center rounded-md bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400 sm:w-auto"
+        className="btn-primary w-full sm:w-auto"
         disabled={isLoading}
         onClick={() => onStart(config)}
       >
-        {isLoading ? "Sebentar, lagi nyiapin soal..." : "Mulai latihan"}
+        {isLoading ? "Menyiapkan soal..." : "Mulai latihan"}
       </button>
     </div>
   );

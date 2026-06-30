@@ -89,14 +89,14 @@ export function SummaryScreen({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-700">
           Hasil Latihan
         </p>
         <h2 className="mt-2 text-3xl font-bold text-slate-950">
-          Skor kamu {score}
+          Skor Anda {score}
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          Kamu benar {correctCount} dari {quiz.questions.length} soal.
+          Anda menjawab benar {correctCount} dari {quiz.questions.length} soal.
         </p>
       </div>
 
@@ -113,7 +113,7 @@ export function SummaryScreen({
               <span
                 className={`rounded-md px-2 py-1 text-xs font-bold uppercase ${
                   result.isCorrect
-                    ? "bg-teal-100 text-teal-900"
+                    ? "bg-brand-100 text-brand-900"
                     : "bg-amber-100 text-amber-900"
                 }`}
               >
@@ -127,19 +127,19 @@ export function SummaryScreen({
               <div className="mt-4 rounded-md bg-slate-50 p-3 text-sm leading-6 text-slate-700">
                 <p>
                   <span className="font-semibold text-slate-950">
-                    Kamu jawab:
+                    Jawaban Anda:
                   </span>{" "}
                   {result.userAnswer}
                 </p>
                 <p className="mt-2">
                   <span className="font-semibold text-slate-950">
-                    Kenapa:
+                    Penjelasan:
                   </span>{" "}
                   {result.question.explanation}
                 </p>
                 <p className="mt-2">
                   <span className="font-semibold text-slate-950">
-                    Latihan lanjut:
+                    Saran latihan:
                   </span>{" "}
                   {result.question.material_recommendation}
                 </p>
@@ -175,14 +175,14 @@ export function SummaryScreen({
             </ul>
           ) : (
             <p className="mt-3 text-sm text-slate-700">
-              Rapi banget. Di sesi ini belum ada bagian yang perlu disorot.
+              Bagus, di sesi ini belum ada bagian yang perlu disorot.
             </p>
           )}
         </div>
 
         <div className="rounded-md border border-slate-200 bg-white p-4">
           <h3 className="text-sm font-bold text-slate-950">
-            Peta kecil kemampuanmu
+            Ringkasan kemampuan Anda
           </h3>
           <div className="mt-3 grid gap-3">
             {skillStats.map((stat) => {
@@ -211,11 +211,11 @@ export function SummaryScreen({
           </div>
         </div>
 
-        <div className="rounded-md border border-sky-200 bg-sky-50 p-4 md:col-span-2">
-          <h3 className="text-sm font-bold text-sky-950">
+        <div className="rounded-md border border-brand-200 bg-brand-50 p-4 md:col-span-2">
+          <h3 className="text-sm font-bold text-brand-900">
             Latihan berikutnya
           </h3>
-          <ul className="mt-3 grid gap-2 text-sm text-sky-900">
+          <ul className="mt-3 grid gap-2 text-sm text-brand-900">
             {recommendations.slice(0, 4).map((recommendation) => (
               <li key={recommendation}>{recommendation}</li>
             ))}
@@ -224,18 +224,10 @@ export function SummaryScreen({
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <button
-          type="button"
-          className="inline-flex items-center justify-center rounded-md border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50"
-          onClick={onRetry}
-        >
+        <button type="button" className="btn-secondary" onClick={onRetry}>
           Coba lagi
         </button>
-        <button
-          type="button"
-          className="inline-flex items-center justify-center rounded-md bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
-          onClick={onNewQuiz}
-        >
+        <button type="button" className="btn-primary" onClick={onNewQuiz}>
           Pilih kuis lain
         </button>
       </div>

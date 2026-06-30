@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "English Quiz Chatbot",
-  description: "Kuis Bahasa Inggris interaktif dengan Gemini API"
+  title: "Lingofy — Kuis Bahasa Inggris bareng Lingo",
+  description:
+    "Lingofy: kuis Bahasa Inggris interaktif yang ditemani Lingo, maskot pintarmu, ditenagai Gemini API."
 };
 
 export default function RootLayout({

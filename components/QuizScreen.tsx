@@ -7,7 +7,7 @@ import type { Question } from "@/types/quiz";
 interface QuizScreenProps {
   answer: string;
   onAnswerChange: (answer: string) => void;
-  onReplaceQuestion: () => void;
+  onAskClue: () => void;
   onSubmit: () => void;
   question: Question;
   questionIndex: number;
@@ -17,7 +17,7 @@ interface QuizScreenProps {
 export function QuizScreen({
   answer,
   onAnswerChange,
-  onReplaceQuestion,
+  onAskClue,
   onSubmit,
   question,
   questionIndex,
@@ -25,7 +25,6 @@ export function QuizScreen({
 }: QuizScreenProps) {
   const progressPercentage = ((questionIndex + 1) / totalQuestions) * 100;
   const canSubmit = answer.trim().length > 0;
-  const canReplaceQuestion = questionIndex < totalQuestions - 1;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -71,7 +70,7 @@ export function QuizScreen({
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-full rounded-full bg-teal-600 transition-all"
+            className="h-full rounded-full bg-brand-500 transition-all"
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
@@ -89,9 +88,9 @@ export function QuizScreen({
             <button
               key={option}
               type="button"
-              className={`min-h-16 rounded-md border px-4 py-3 text-left text-sm font-semibold leading-relaxed transition ${
+              className={`min-h-16 rounded-xl border-2 px-4 py-3 text-left text-sm font-semibold leading-relaxed transition ${
                 answer === option
-                  ? "border-teal-600 bg-teal-50 text-teal-950"
+                  ? "border-brand-500 bg-brand-50 text-brand-900"
                   : "border-slate-200 bg-white text-slate-800 hover:border-slate-300"
               }`}
               onClick={() => onAnswerChange(option)}
@@ -102,10 +101,10 @@ export function QuizScreen({
         </div>
       ) : (
         <label className="grid gap-2 text-sm font-semibold text-slate-800">
-          Tulis jawabanmu
+          Tulis jawaban Anda
           <input
-            className="rounded-md border border-slate-300 px-4 py-3 text-base text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-200"
-            placeholder="Ketik di sini"
+            className="rounded-xl border-2 border-slate-200 px-4 py-3 text-base text-slate-950 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+            placeholder="Ketik jawaban di sini"
             value={answer}
             onChange={(event) => onAnswerChange(event.target.value)}
           />
@@ -115,7 +114,7 @@ export function QuizScreen({
       <div className="flex flex-col gap-3 sm:flex-row">
         <button
           type="button"
-          className="inline-flex w-full items-center justify-center rounded-md bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400 sm:w-auto"
+          className="btn-primary w-full sm:w-auto"
           disabled={!canSubmit}
           onClick={onSubmit}
         >
@@ -123,11 +122,10 @@ export function QuizScreen({
         </button>
         <button
           type="button"
-          className="inline-flex w-full items-center justify-center rounded-md border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 sm:w-auto"
-          disabled={!canReplaceQuestion}
-          onClick={onReplaceQuestion}
+          className="btn-secondary w-full sm:w-auto"
+          onClick={onAskClue}
         >
-          Ganti soal
+          Minta clue ke Lingo
         </button>
       </div>
     </div>

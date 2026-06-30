@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import type { QuizAnswerResult } from "@/types/quiz";
 
 interface FeedbackScreenProps {
@@ -8,31 +10,23 @@ interface FeedbackScreenProps {
   result: QuizAnswerResult;
 }
 
-const correctGifs = [
+// Cadangan tampil instan sebelum GIF acak dari online selesai dimuat.
+const correctFallback = [
   "https://media.giphy.com/media/111ebonMs90YLu/giphy.gif",
   "https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif",
   "https://media.giphy.com/media/xT0xezQGU5xCDJuCPe/giphy.gif",
-  "https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif"
+  "https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif",
 ];
 
-const wrongGifs = [
+const wrongFallback = [
   "https://media.giphy.com/media/3oEjI80DSa1grNPTDq/giphy.gif",
   "https://media.giphy.com/media/l0HlvtIPzPdt2usKs/giphy.gif",
   "https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif",
-  "https://media.giphy.com/media/3o7TKVfu4rwyscasla/giphy.gif"
+  "https://media.giphy.com/media/3o7TKVfu4rwyscasla/giphy.gif",
 ];
 
-function hashText(value: string): number {
-  return value.split("").reduce((total, character) => {
-    return total + character.charCodeAt(0);
-  }, 0);
-}
-
-function getFeedbackGif(result: QuizAnswerResult): string {
-  const pool = result.isCorrect ? correctGifs : wrongGifs;
-  const seed = `${result.question.id}-${result.userAnswer}-${result.isCorrect}`;
-
-  return pool[hashText(seed) % pool.length];
+function pickRandom<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)];
 }
 
 export function FeedbackScreen({
@@ -41,51 +35,78 @@ export function FeedbackScreen({
   result
 }: FeedbackScreenProps) {
   const { question, userAnswer, isCorrect } = result;
-  const feedbackGif = getFeedbackGif(result);
+  const [gifUrl, setGifUrl] = useState(() =>
+    pickRandom(isCorrect ? correctFallback : wrongFallback)
+  );
+
+  // Ambil GIF acak dari online sesuai hasil (benar/salah).
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+
+    fetch(`/api/feedback-gif?result=${isCorrect ? "correct" : "wrong"}`, {
+      cache: "no-store",
+      signal: controller.signal
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { url?: string } | null) => {
+        if (active && data?.url) {
+          setGifUrl(data.url);
+        }
+      })
+      .catch(() => {
+        // Tetap pakai cadangan jika gagal.
+      });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [isCorrect]);
 
   return (
     <div className="flex flex-col gap-4">
       <div
-        className={`rounded-lg border p-4 ${
+        className={`rounded-2xl border-2 p-4 ${
           isCorrect
-            ? "border-green-200 bg-green-50 text-green-950"
+            ? "border-brand-200 bg-brand-50 text-brand-900"
             : "border-red-200 bg-red-50 text-red-950"
         }`}
       >
         <div className="grid gap-4 md:grid-cols-[180px_minmax(0,1fr)] md:items-center">
-          {/* eslint-disable-next-line @next/next/no-img-element -- External GIFs should stay animated. */}
+          {/* eslint-disable-next-line @next/next/no-img-element -- GIF eksternal perlu tetap beranimasi. */}
           <img
-            src={feedbackGif}
+            src={gifUrl}
             alt={isCorrect ? "GIF jawaban benar" : "GIF jawaban salah"}
-            className="aspect-video w-full rounded-md object-cover"
+            className="aspect-video w-full rounded-xl object-cover"
           />
           <div className="grid gap-3">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.18em]">
-                {isCorrect ? "Benar" : "Salah"}
+                {isCorrect ? "Benar" : "Belum tepat"}
               </p>
               <h2 className="mt-2 text-2xl font-bold">
                 {isCorrect
-                  ? "Yes, ini masuk. Lanjut gas."
-                  : "Belum kena. Tapi polanya mulai kebaca."}
+                  ? "Tepat! Jawaban Anda sudah benar."
+                  : "Belum tepat, tetapi Anda sudah di jalur yang benar."}
               </h2>
             </div>
 
             <div className="grid gap-1 text-sm leading-6">
               <p>
-                <span className="font-semibold">Kamu jawab:</span>{" "}
+                <span className="font-semibold">Jawaban Anda:</span>{" "}
                 {userAnswer}
               </p>
               <p>
-                <span className="font-semibold">Yang tepat:</span>{" "}
+                <span className="font-semibold">Jawaban tepat:</span>{" "}
                 {question.correct_answer}
               </p>
               <p>
-                <span className="font-semibold">Kenapa:</span>{" "}
+                <span className="font-semibold">Penjelasan:</span>{" "}
                 {question.explanation}
               </p>
               <p>
-                <span className="font-semibold">Kalau mau nguatkan:</span>{" "}
+                <span className="font-semibold">Saran latihan:</span>{" "}
                 {question.material_recommendation}
               </p>
             </div>
@@ -95,10 +116,10 @@ export function FeedbackScreen({
 
       <button
         type="button"
-        className="inline-flex w-full items-center justify-center rounded-md bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800 sm:w-auto"
+        className="btn-primary w-full sm:w-auto"
         onClick={onNext}
       >
-        {isLastQuestion ? "Lihat hasilnya" : "Lanjut soal berikutnya"}
+        {isLastQuestion ? "Lihat hasil" : "Lanjut ke soal berikutnya"}
       </button>
     </div>
   );

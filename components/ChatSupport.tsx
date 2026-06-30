@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, type ReactNode, useEffect, useRef, useState } from "react";
 
 import { postJsonWithRateLimitRetry } from "@/lib/http";
 import type { ChatQuizContext, Question } from "@/types/quiz";
@@ -33,6 +33,48 @@ function getErrorMessage(error: unknown): string {
   return "Chat gagal merespons. Silakan coba lagi.";
 }
 
+// Render inline **tebal** dan `kode` agar respons Lingo lebih rapi.
+function renderInline(text: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  const pattern = /(\*\*[^*]+\*\*|`[^`]+`)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(text.slice(lastIndex, match.index));
+    }
+
+    const token = match[0];
+
+    if (token.startsWith("**")) {
+      nodes.push(
+        <strong key={key++} className="font-semibold text-slate-900">
+          {token.slice(2, -2)}
+        </strong>
+      );
+    } else {
+      nodes.push(
+        <code
+          key={key++}
+          className="rounded bg-slate-100 px-1 py-0.5 text-[0.85em] font-medium text-slate-800"
+        >
+          {token.slice(1, -1)}
+        </code>
+      );
+    }
+
+    lastIndex = pattern.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+
+  return nodes;
+}
+
 function ChatMessageContent({ message }: { message: ChatMessage }) {
   if (message.role === "user") {
     return <span className="whitespace-pre-wrap">{message.text}</span>;
@@ -44,7 +86,7 @@ function ChatMessageContent({ message }: { message: ChatMessage }) {
     .filter(Boolean);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       {lines.map((line, index) => {
         const bulletMatch = line.match(/^[-*]\s+(.+)/);
         const numberedMatch = line.match(/^(\d+)[.)]\s+(.+)/);
@@ -52,8 +94,8 @@ function ChatMessageContent({ message }: { message: ChatMessage }) {
         if (bulletMatch) {
           return (
             <div key={`${line}-${index}`} className="flex gap-2">
-              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-500" />
-              <span>{bulletMatch[1]}</span>
+              <span className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
+              <span>{renderInline(bulletMatch[1])}</span>
             </div>
           );
         }
@@ -61,15 +103,15 @@ function ChatMessageContent({ message }: { message: ChatMessage }) {
         if (numberedMatch) {
           return (
             <div key={`${line}-${index}`} className="flex gap-2">
-              <span className="shrink-0 font-semibold text-slate-600">
+              <span className="shrink-0 font-bold text-brand-600">
                 {numberedMatch[1]}.
               </span>
-              <span>{numberedMatch[2]}</span>
+              <span>{renderInline(numberedMatch[2])}</span>
             </div>
           );
         }
 
-        return <p key={`${line}-${index}`}>{line}</p>;
+        return <p key={`${line}-${index}`}>{renderInline(line)}</p>;
       })}
     </div>
   );
@@ -99,7 +141,7 @@ export function ChatSupport({
     {
       id: "initial-assistant-message",
       role: "assistant",
-      text: "Lagi bingung di soal? Tulis aja. Aku bisa bantu jelasin pola kalimat, arti kata, atau kasih clue pelan-pelan. Jawaban finalnya tetap kamu yang pilih :)"
+      text: "Halo, saya Lingo. Silakan tanyakan pola kalimat, arti kata, atau minta petunjuk soal. Jawaban akhirnya tetap Anda yang menentukan."
     }
   ]);
   const [input, setInput] = useState("");
@@ -165,22 +207,27 @@ export function ChatSupport({
   }
 
   return (
-    <aside className="flex h-fit self-start flex-col rounded-lg border border-slate-200 bg-white shadow-panel">
-      <div className="border-b border-slate-200 px-4 py-4">
-        <h2 className="text-lg font-bold text-slate-950">Chatbot</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Tanya materi, arti kata, atau minta clue soal.
-        </p>
+    <aside className="flex flex-col rounded-2xl border-2 border-slate-200 bg-white shadow-panel lg:h-full lg:min-h-0 lg:min-w-0">
+      <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-4">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-500 text-sm font-black text-white shadow-[0_3px_0_#387f06]">
+          L
+        </span>
+        <div>
+          <h2 className="text-lg font-bold text-slate-950">Lingo</h2>
+          <p className="text-sm text-slate-600">
+            Tanya materi, arti kata, atau minta clue soal.
+          </p>
+        </div>
       </div>
 
-      <div className="max-h-[420px] overflow-y-auto px-4 py-4">
+      <div className="max-h-[320px] overflow-y-auto px-4 py-4 lg:max-h-none lg:min-h-0 lg:flex-1">
         <div className="flex flex-col gap-3">
           {messages.map((message) => (
             <div
               key={message.id}
               className={`rounded-md px-3 py-2 text-sm leading-6 ${
                 message.role === "user"
-                  ? "ml-8 bg-slate-950 text-white"
+                  ? "ml-8 bg-brand-500 text-white"
                   : "mr-8 bg-slate-100 text-slate-800"
               }`}
             >
@@ -189,7 +236,7 @@ export function ChatSupport({
           ))}
           {isSending && (
             <div className="mr-8 rounded-md bg-slate-100 px-3 py-2 text-sm text-slate-700">
-              Bentar, aku cek dulu...
+              Sebentar, Lingo sedang menyiapkan jawaban...
             </div>
           )}
         </div>
@@ -205,9 +252,9 @@ export function ChatSupport({
         <div className="flex gap-2">
           <input
             ref={inputRef}
-            className="min-w-0 flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-200"
+            className="min-w-0 flex-1 rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
             maxLength={500}
-            placeholder="Tulis pertanyaanmu"
+            placeholder="Tulis pertanyaan Anda"
             value={inputValue}
             onChange={(event) => {
               setInput(event.target.value);
@@ -218,7 +265,7 @@ export function ChatSupport({
           />
           <button
             type="submit"
-            className="rounded-md bg-slate-950 px-4 py-2 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="rounded-xl bg-brand-500 px-4 py-2 text-sm font-bold text-white shadow-[0_3px_0_#387f06] transition hover:bg-brand-600 active:translate-y-[2px] active:shadow-[0_1px_0_#387f06] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none disabled:active:translate-y-0"
             disabled={inputValue.trim().length < 2 || isSending}
           >
             Kirim
