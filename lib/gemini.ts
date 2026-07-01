@@ -13,7 +13,7 @@ import type {
   QuizGenerationRequest
 } from "@/types/quiz";
 
-const GEMINI_MODEL = "gemini-3.5-flash-lite";
+const GEMINI_MODEL = "gemini-3.5-flash";
 
 const GENERATE_QUIZ_SYSTEM_INSTRUCTION = `Kamu adalah generator soal pembelajaran Bahasa Inggris untuk pelajar Indonesia.
 
