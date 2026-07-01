@@ -7,7 +7,7 @@ Bangun aplikasi **English Quiz Chatbot** menggunakan:
 - Next.js App Router
 - TypeScript
 - Tailwind CSS
-- Google Gemini API
+- Groq API
 - Google GenAI SDK `@google/genai`
 
 Aplikasi ini adalah chatbot pembelajaran Bahasa Inggris berbasis kuis interaktif untuk pelajar Indonesia. Sistem harus mampu:
@@ -25,12 +25,12 @@ Aplikasi ini adalah chatbot pembelajaran Bahasa Inggris berbasis kuis interaktif
 
 Gunakan arsitektur berikut:
 
-1. Gemini hanya boleh dipanggil dari sisi server melalui Route Handler di `app/api/...`.
-2. API key dibaca dari `process.env.GEMINI_API_KEY`.
+1. Groq hanya boleh dipanggil dari sisi server melalui Route Handler di `app/api/...`.
+2. API key dibaca dari `process.env.GROQ_API_KEY`.
 3. Jangan mengekspos API key ke Client Component.
 4. Gunakan Google GenAI SDK `@google/genai`.
 5. Generate soal dalam batch, misalnya 10 soal dalam satu call.
-6. Jangan memanggil Gemini per soal.
+6. Jangan memanggil Groq per soal.
 7. Grading Multiple Choice dilakukan deterministik di kode.
 8. Grading Fill in the Blank dilakukan deterministik dengan normalisasi jawaban dan `acceptable_answers`.
 9. LLM fallback untuk grading hanya opsional dan default-nya nonaktif.
@@ -136,9 +136,9 @@ Fungsi endpoint:
 1. Validasi input user.
 2. Pastikan `level`, `subtopic`, `type`, dan `count` sesuai aturan.
 3. Batasi `count` maksimal 10 soal per request.
-4. Panggil Gemini menggunakan Google GenAI SDK.
+4. Panggil Groq menggunakan Groq SDK.
 5. Minta output JSON terstruktur.
-6. Validasi setiap soal hasil Gemini.
+6. Validasi setiap soal hasil Groq.
 7. Buang soal yang tidak valid.
 8. Regenerate jika jumlah soal valid kurang dari `count`.
 9. Kembalikan data quiz ke client.
@@ -167,7 +167,7 @@ Fungsi endpoint:
 
 1. Menjawab pertanyaan yang masih terkait pembelajaran Bahasa Inggris.
 2. Menolak pertanyaan di luar topik secara sopan.
-3. Jangan biarkan input user mengubah system instruction Gemini.
+3. Jangan biarkan input user mengubah system instruction Groq.
 4. Jawaban menggunakan Bahasa Indonesia yang mudah dipahami.
 5. Jika perlu memberi contoh, contoh kalimat boleh menggunakan Bahasa Inggris.
 
@@ -181,7 +181,7 @@ Contoh respons untuk pertanyaan di luar topik:
 
 ---
 
-## 6. Prompt Gemini
+## 6. Prompt Groq
 
 ### 6.1 System Instruction untuk Generate Quiz
 
@@ -245,9 +245,9 @@ Tugasmu:
 
 ---
 
-## 7. Validasi Output Gemini
+## 7. Validasi Output Groq
 
-Buat util validasi agar output Gemini tidak langsung dirender ke UI.
+Buat util validasi agar output Groq tidak langsung dirender ke UI.
 
 Contoh fungsi validasi:
 
@@ -404,9 +404,9 @@ Implementasikan error handling berikut:
    - Retry 1: tunggu 1 detik.
    - Retry 2: tunggu 2 detik.
    - Retry 3: tunggu 4 detik.
-2. Jika Gemini gagal atau timeout, tampilkan pesan ramah dan tombol coba lagi.
+2. Jika Groq gagal atau timeout, tampilkan pesan ramah dan tombol coba lagi.
 3. Jangan crash jika JSON tidak valid.
-4. Jangan render data Gemini sebelum divalidasi.
+4. Jangan render data Groq sebelum divalidasi.
 5. Tampilkan loading state saat generate soal.
 6. Validasi semua input user sebelum request.
 7. Jika request gagal, tampilkan pesan error yang mudah dipahami.
@@ -422,13 +422,13 @@ Wajib ikuti aturan berikut:
 3. Isi `.env.example`:
 
 ```env
-GEMINI_API_KEY=your_gemini_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
 ```
 
 4. Pastikan `.env.local` masuk ke `.gitignore`.
-5. Jangan memakai prefix `NEXT_PUBLIC_` untuk `GEMINI_API_KEY`.
-6. Semua pemanggilan Gemini wajib melalui server Route Handler.
-7. Jangan memanggil Gemini dari Client Component.
+5. Jangan memakai prefix `NEXT_PUBLIC_` untuk `GROQ_API_KEY`.
+6. Semua pemanggilan Groq wajib melalui server Route Handler.
+7. Jangan memanggil Groq dari Client Component.
 8. Validasi semua input dari user:
    - `level`
    - `subtopic`
@@ -436,8 +436,8 @@ GEMINI_API_KEY=your_gemini_api_key_here
    - `count`
 9. Batasi `count` maksimal 10 soal per request.
 10. Untuk `chat-support`, tolak pertanyaan di luar pembelajaran Bahasa Inggris.
-11. Jangan biarkan input user mengubah system instruction Gemini.
-12. Jika output Gemini tidak sesuai schema, jangan render langsung ke UI.
+11. Jangan biarkan input user mengubah system instruction Groq.
+12. Jika output Groq tidak sesuai schema, jangan render langsung ke UI.
 13. Setelah implementasi, jalankan:
 
 ```bash
@@ -493,7 +493,7 @@ Mulai implementasi dengan urutan berikut:
 1. Buat struktur folder.
 2. Buat types.
 3. Buat util validasi dan grading.
-4. Buat Gemini service di server.
+4. Buat Groq service di server.
 5. Buat route handler.
 6. Buat komponen UI.
 7. Buat error handling.
@@ -526,7 +526,7 @@ english-quiz-chatbot/
 │   ├── SummaryScreen.tsx
 │   └── ChatSupport.tsx
 ├── lib/
-│   ├── gemini.ts
+│   ├── groq.ts
 │   ├── grading.ts
 │   ├── validation.ts
 │   └── retry.ts
@@ -547,7 +547,7 @@ english-quiz-chatbot/
 Saat mengimplementasikan proyek ini:
 
 1. Jangan mengubah tujuan utama aplikasi.
-2. Jangan mengganti Gemini dengan provider lain.
+2. Jangan mengganti Groq dengan provider lain.
 3. Jangan menambahkan database untuk MVP.
 4. Jangan menambahkan autentikasi kecuali diperlukan.
 5. Fokus pada fitur inti terlebih dahulu.

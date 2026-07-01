@@ -95,7 +95,7 @@ function parseJsonSafely(text: string): unknown {
       return JSON.parse(cleaned.slice(firstObject, lastObject + 1));
     }
 
-    throw new Error("Gemini tidak mengembalikan JSON yang valid.");
+    throw new Error("Groq tidak mengembalikan JSON yang valid.");
   }
 }
 

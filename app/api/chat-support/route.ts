@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { chatSupport } from "@/lib/gemini";
+import { chatSupport } from "@/lib/groq";
 import { isInvalidApiKeyError, isRateLimitError } from "@/lib/retry";
 import { parseChatRequest } from "@/lib/validation";
 

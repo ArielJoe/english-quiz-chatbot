@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Lingofy — Kuis Bahasa Inggris bareng Lingo",
   description:
-    "Lingofy: kuis Bahasa Inggris interaktif yang ditemani Lingo, maskot pintarmu, ditenagai Gemini API."
+    "Lingofy: kuis Bahasa Inggris interaktif yang ditemani Lingo, maskot pintarmu, ditenagai Groq API."
 };
 
 export default function RootLayout({

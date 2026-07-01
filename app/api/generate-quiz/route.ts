@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { generateQuiz } from "@/lib/gemini";
+import { generateQuiz } from "@/lib/groq";
 import { isInvalidApiKeyError, isRateLimitError } from "@/lib/retry";
 import { parseQuizRequest } from "@/lib/validation";
 

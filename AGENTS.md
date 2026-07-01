@@ -2,7 +2,7 @@
 
 ## Project Context
 
-Project ini adalah English Quiz Chatbot berbasis Next.js App Router, TypeScript, Tailwind CSS, dan Google Gemini API.
+Project ini adalah English Quiz Chatbot berbasis Next.js App Router, TypeScript, Tailwind CSS, dan Groq API.
 
 Tujuan utama:
 - Menghasilkan soal Bahasa Inggris secara dinamis.
@@ -16,9 +16,9 @@ Tujuan utama:
 - Gunakan Next.js App Router.
 - Gunakan TypeScript secara ketat.
 - Gunakan Tailwind CSS untuk styling.
-- Gemini hanya boleh dipanggil dari server Route Handler di `app/api/...`.
-- Jangan pernah memanggil Gemini dari Client Component.
-- Jangan mengekspos `GEMINI_API_KEY` ke browser.
+- Groq hanya boleh dipanggil dari server Route Handler di `app/api/...`.
+- Jangan pernah memanggil Groq dari Client Component.
+- Jangan mengekspos `GROQ_API_KEY` ke browser.
 - Jangan memakai prefix `NEXT_PUBLIC_` untuk API key.
 - Buat `.env.example`, bukan `.env.local`.
 - Pastikan `.env.local` masuk ke `.gitignore`.
