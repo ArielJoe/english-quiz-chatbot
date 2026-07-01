@@ -232,6 +232,16 @@ export function coerceQuestion(value: unknown): Question | null {
     }
   }
 
+  // Koersi khusus untuk tipe fill_in_blank agar memenuhi validasi
+  if (question.type === "fill_in_blank") {
+    question.options = [];
+    if (!question.correct_answer && question.acceptable_answers.length > 0) {
+      question.correct_answer = question.acceptable_answers[0];
+    } else if (question.correct_answer && question.acceptable_answers.length === 0) {
+      question.acceptable_answers = [question.correct_answer.toLowerCase()];
+    }
+  }
+
   return question;
 }
 

@@ -32,6 +32,7 @@ Aturan:
    - Distractor harus masuk akal, bukan acak.
 5. Untuk fill_in_blank:
    - options harus array kosong.
+   - correct_answer harus diisi dengan jawaban benar utama (sama dengan item pertama di acceptable_answers).
    - acceptable_answers berisi semua varian jawaban benar yang umum.
    - acceptable_answers ditulis dalam huruf kecil dan sudah di-trim.
 6. Jangan mengulang soal yang sama.
