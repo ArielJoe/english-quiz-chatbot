@@ -360,7 +360,7 @@ function CursorMascot({ message, mood }: { message: string; mood: MascotMood }) 
 
         {styles.reaction && (
           <span
-            key={mood}
+            key={`reaction-${mood}`}
             className="mascot-reaction absolute -right-1 -top-2 text-2xl"
           >
             {styles.reaction}
@@ -368,7 +368,7 @@ function CursorMascot({ message, mood }: { message: string; mood: MascotMood }) 
         )}
 
         <MascotCharacter
-          key={mood}
+          key={`char-${mood}`}
           className={`mascot-float h-16 w-16 drop-shadow-md ${
             mood === "correct"
               ? "mascot-bounce"

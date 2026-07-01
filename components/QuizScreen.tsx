@@ -84,9 +84,9 @@ export function QuizScreen({
 
       {question.type === "multiple_choice" ? (
         <div className="grid gap-3 sm:grid-cols-2">
-          {question.options.map((option) => (
+          {question.options.map((option, index) => (
             <button
-              key={option}
+              key={`${index}-${option}`}
               type="button"
               className={`min-h-16 rounded-xl border-2 px-4 py-3 text-left text-sm font-semibold leading-relaxed transition ${
                 answer === option

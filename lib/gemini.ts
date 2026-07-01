@@ -290,11 +290,12 @@ export async function generateQuiz(
   const seenQuestions = new Set<string>();
   let attempts = 0;
 
-  while (acceptedQuestions.length < request.count && attempts < 3) {
+  while (acceptedQuestions.length < request.count && attempts < 4) {
     attempts += 1;
     const remainingRequest = {
       ...request,
-      count: request.count - acceptedQuestions.length
+      // Minta sedikit lebih banyak sebagai buffer terhadap soal yang ditolak.
+      count: request.count - acceptedQuestions.length + 1
     };
 
     const response = await withExponentialBackoff(() =>
@@ -343,16 +344,16 @@ export async function generateQuiz(
     }
   }
 
-  if (acceptedQuestions.length < request.count) {
+  if (acceptedQuestions.length === 0) {
     throw new Error(
-      "Belum berhasil menghasilkan jumlah soal valid yang cukup. Silakan coba lagi."
+      "Belum berhasil menghasilkan soal yang valid. Silakan coba lagi."
     );
   }
 
   return {
     level: request.level,
     subtopic: request.subtopic,
-    questions: acceptedQuestions
+    questions: acceptedQuestions.slice(0, request.count)
   };
 }
 

@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 
     if (
       error instanceof Error &&
-      error.message.includes("jumlah soal valid")
+      error.message.includes("soal yang valid")
     ) {
       return NextResponse.json({ error: error.message }, { status: 502 });
     }

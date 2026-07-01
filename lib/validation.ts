@@ -149,24 +149,50 @@ export function parseChatRequest(
   };
 }
 
+function normalizeEnumValue(value: unknown): unknown {
+  return typeof value === "string" ? value.trim().toLowerCase() : value;
+}
+
+function normalizeQuestionType(value: unknown): unknown {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const normalized = value.trim().toLowerCase().replace(/[\s-]+/g, "_");
+
+  if (["multiple_choice", "multiplechoice", "mcq", "pilihan_ganda"].includes(normalized)) {
+    return "multiple_choice";
+  }
+
+  if (
+    ["fill_in_blank", "fill_in_the_blank", "fillintheblank", "isian"].includes(
+      normalized
+    )
+  ) {
+    return "fill_in_blank";
+  }
+
+  return normalized;
+}
+
 export function coerceQuestion(value: unknown): Question | null {
   if (!isRecord(value)) {
     return null;
   }
 
-  if (
-    !isQuestionType(value.type) ||
-    !isSubtopic(value.subtopic) ||
-    !isLevel(value.level)
-  ) {
+  const type = normalizeQuestionType(value.type);
+  const subtopic = normalizeEnumValue(value.subtopic);
+  const level = normalizeEnumValue(value.level);
+
+  if (!isQuestionType(type) || !isSubtopic(subtopic) || !isLevel(level)) {
     return null;
   }
 
   const question: Question = {
     id: typeof value.id === "string" ? value.id.trim() : "",
-    type: value.type,
-    subtopic: value.subtopic,
-    level: value.level,
+    type,
+    subtopic,
+    level,
     question:
       typeof value.question === "string" ? value.question.trim() : "",
     options: isStringArray(value.options)
@@ -191,6 +217,21 @@ export function coerceQuestion(value: unknown): Question | null {
         : ""
   };
 
+  // Samakan correct_answer ke opsi yang cocok meski beda kapitalisasi/spasi.
+  if (
+    question.type === "multiple_choice" &&
+    !question.options.includes(question.correct_answer)
+  ) {
+    const match = question.options.find(
+      (option) =>
+        option.toLowerCase() === question.correct_answer.toLowerCase()
+    );
+
+    if (match) {
+      question.correct_answer = match;
+    }
+  }
+
   return question;
 }
 
@@ -205,6 +246,11 @@ export function isValidQuestion(q: Question): boolean {
   if (q.type === "multiple_choice") {
     if (q.options.length !== 4) return false;
     if (!q.options.includes(q.correct_answer)) return false;
+
+    const uniqueOptions = new Set(
+      q.options.map((option) => option.toLowerCase())
+    );
+    if (uniqueOptions.size !== q.options.length) return false;
   }
 
   if (q.type === "fill_in_blank") {
