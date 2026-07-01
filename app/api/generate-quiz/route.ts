@@ -36,7 +36,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (error instanceof Error && error.message.includes("GEMINI_API_KEY")) {
+    if (error instanceof Error && error.message.includes("GROQ_API_KEY")) {
       return NextResponse.json(
         { error: "Konfigurasi layanan kuis belum tersedia di server." },
         { status: 502 }
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "API key Gemini tidak valid. Periksa nilai GEMINI_API_KEY di file environment server, lalu restart dev server."
+            "API key Groq tidak valid. Periksa nilai GROQ_API_KEY di file environment server, lalu restart dev server."
         },
         { status: 502 }
       );

@@ -46,10 +46,12 @@ export function isInvalidApiKeyError(error: unknown): boolean {
   };
 
   const message = maybeError.message?.toLowerCase() ?? "";
+  const status = maybeError.status ?? maybeError.statusCode;
 
   return (
-    maybeError.status === 400 &&
+    (status === 400 || status === 401) &&
     (message.includes("api_key_invalid") ||
+      message.includes("invalid_api_key") ||
       message.includes("api key not valid") ||
       message.includes("invalid api key"))
   );

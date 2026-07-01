@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import Groq from "groq-sdk";
 
 import { withExponentialBackoff } from "@/lib/retry";
 import {
@@ -13,7 +13,7 @@ import type {
   QuizGenerationRequest
 } from "@/types/quiz";
 
-const GEMINI_MODEL = "gemini-3.5-flash";
+const GROQ_MODEL = "llama-3.3-70b-versatile";
 
 const GENERATE_QUIZ_SYSTEM_INSTRUCTION = `Kamu adalah generator soal pembelajaran Bahasa Inggris untuk pelajar Indonesia.
 
@@ -58,14 +58,14 @@ Tugasmu:
 export const OUT_OF_TOPIC_RESPONSE =
   "Maaf, saya hanya membantu hal yang berkaitan dengan pembelajaran Bahasa Inggris atau penggunaan aplikasi Lingofy. Silakan tanyakan grammar, arti kata, terjemahan, percakapan, fitur Lingofy, atau minta petunjuk untuk soal yang sedang Anda kerjakan.";
 
-function getGeminiClient(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY;
+function getGroqClient(): Groq {
+  const apiKey = process.env.GROQ_API_KEY;
 
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY belum dikonfigurasi.");
+    throw new Error("GROQ_API_KEY belum dikonfigurasi.");
   }
 
-  return new GoogleGenAI({ apiKey });
+  return new Groq({ apiKey });
 }
 
 function stripMarkdownFence(text: string): string {
@@ -285,7 +285,7 @@ ${optionsText}`;
 export async function generateQuiz(
   request: QuizGenerationRequest
 ): Promise<Quiz> {
-  const ai = getGeminiClient();
+  const groq = getGroqClient();
   const acceptedQuestions: Question[] = [];
   const seenQuestions = new Set<string>();
   let attempts = 0;
@@ -298,21 +298,24 @@ export async function generateQuiz(
     };
 
     const response = await withExponentialBackoff(() =>
-      ai.models.generateContent({
-        model: GEMINI_MODEL,
-        contents: buildQuizPrompt(
-          remainingRequest,
-          acceptedQuestions.map((question) => question.question)
-        ),
-        config: {
-          systemInstruction: GENERATE_QUIZ_SYSTEM_INSTRUCTION,
-          responseMimeType: "application/json",
-          temperature: 0.7
-        }
+      groq.chat.completions.create({
+        model: GROQ_MODEL,
+        messages: [
+          { role: "system", content: GENERATE_QUIZ_SYSTEM_INSTRUCTION },
+          {
+            role: "user",
+            content: buildQuizPrompt(
+              remainingRequest,
+              acceptedQuestions.map((question) => question.question)
+            )
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.7
       })
     );
 
-    const text = response.text ?? "";
+    const text = response.choices[0]?.message?.content ?? "";
     const payload = parseJsonSafely(text);
     const questions = extractQuestions(payload);
 
@@ -342,7 +345,7 @@ export async function generateQuiz(
 
   if (acceptedQuestions.length < request.count) {
     throw new Error(
-      "Gemini belum menghasilkan jumlah soal valid yang cukup. Silakan coba lagi."
+      "Belum berhasil menghasilkan jumlah soal valid yang cukup. Silakan coba lagi."
     );
   }
 
@@ -370,27 +373,18 @@ export async function chatSupport(
     return "Kalau jawabannya saya berikan langsung, latihannya jadi kurang terasa. Coba perhatikan kata kunci pada soal, lalu singkirkan opsi yang paling tidak sesuai. Saya bisa bantu dengan petunjuk bertahap.";
   }
 
-  const ai = getGeminiClient();
+  const groq = getGroqClient();
 
   const response = await withExponentialBackoff(() =>
-    ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: buildChatPrompt(message, quizContext)
-            }
-          ]
-        }
+    groq.chat.completions.create({
+      model: GROQ_MODEL,
+      messages: [
+        { role: "system", content: CHAT_SUPPORT_SYSTEM_INSTRUCTION },
+        { role: "user", content: buildChatPrompt(message, quizContext) }
       ],
-      config: {
-        systemInstruction: CHAT_SUPPORT_SYSTEM_INSTRUCTION,
-        temperature: 0.4
-      }
+      temperature: 0.4
     })
   );
 
-  return response.text?.trim() || OUT_OF_TOPIC_RESPONSE;
+  return response.choices[0]?.message?.content?.trim() || OUT_OF_TOPIC_RESPONSE;
 }
