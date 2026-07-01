@@ -12,6 +12,7 @@ interface QuizScreenProps {
   question: Question;
   questionIndex: number;
   totalQuestions: number;
+  isSubmitting?: boolean;
 }
 
 export function QuizScreen({
@@ -21,13 +22,16 @@ export function QuizScreen({
   onSubmit,
   question,
   questionIndex,
-  totalQuestions
+  totalQuestions,
+  isSubmitting = false
 }: QuizScreenProps) {
   const progressPercentage = ((questionIndex + 1) / totalQuestions) * 100;
-  const canSubmit = answer.trim().length > 0;
+  const canSubmit = answer.trim().length > 0 && !isSubmitting;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
+      if (isSubmitting) return;
+
       const target = event.target;
       const isInputTarget =
         target instanceof HTMLInputElement ||
@@ -55,7 +59,7 @@ export function QuizScreen({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [canSubmit, onAnswerChange, onSubmit, question]);
+  }, [canSubmit, onAnswerChange, onSubmit, question, isSubmitting]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -88,11 +92,12 @@ export function QuizScreen({
             <button
               key={`${index}-${option}`}
               type="button"
+              disabled={isSubmitting}
               className={`min-h-16 rounded-xl border-2 px-4 py-3 text-left text-sm font-semibold leading-relaxed transition ${
                 answer === option
                   ? "border-brand-500 bg-brand-50 text-brand-900"
                   : "border-slate-200 bg-white text-slate-800 hover:border-slate-300"
-              }`}
+              } ${isSubmitting ? "opacity-60 cursor-not-allowed" : ""}`}
               onClick={() => onAnswerChange(option)}
             >
               {option}
@@ -103,9 +108,10 @@ export function QuizScreen({
         <label className="grid gap-2 text-sm font-semibold text-slate-800">
           Tulis jawaban Anda
           <input
-            className="rounded-xl border-2 border-slate-200 px-4 py-3 text-base text-slate-950 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+            className="rounded-xl border-2 border-slate-200 px-4 py-3 text-base text-slate-950 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 disabled:opacity-60 disabled:cursor-not-allowed"
             placeholder="Ketik jawaban di sini"
             value={answer}
+            disabled={isSubmitting}
             onChange={(event) => onAnswerChange(event.target.value)}
           />
         </label>
@@ -115,14 +121,15 @@ export function QuizScreen({
         <button
           type="button"
           className="btn-primary w-full sm:w-auto"
-          disabled={!canSubmit}
+          disabled={!canSubmit || isSubmitting}
           onClick={onSubmit}
         >
-          Cek jawaban
+          {isSubmitting ? "Menilai..." : "Cek jawaban"}
         </button>
         <button
           type="button"
           className="btn-secondary w-full sm:w-auto"
+          disabled={isSubmitting}
           onClick={onAskClue}
         >
           Minta clue ke Lingo

@@ -1,33 +1,4 @@
-import { normalizeAnswer } from "@/lib/grading";
-
-/** Jarak edit Levenshtein antara dua string. */
-export function levenshtein(a: string, b: string): number {
-  const m = a.length;
-  const n = b.length;
-
-  if (m === 0) return n;
-  if (n === 0) return m;
-
-  const distances = Array.from({ length: n + 1 }, (_, index) => index);
-
-  for (let i = 1; i <= m; i += 1) {
-    let previous = distances[0];
-    distances[0] = i;
-
-    for (let j = 1; j <= n; j += 1) {
-      const temp = distances[j];
-      const substitutionCost = a[i - 1] === b[j - 1] ? 0 : 1;
-      distances[j] = Math.min(
-        distances[j] + 1,
-        distances[j - 1] + 1,
-        previous + substitutionCost
-      );
-      previous = temp;
-    }
-  }
-
-  return distances[n];
-}
+import { editDistance, normalizeAnswer } from "@/lib/grading";
 
 /**
  * Mengembalikan kandidat jawaban yang paling mirip jika input terlihat seperti
@@ -60,7 +31,7 @@ export function findTypoSuggestion(
       return null;
     }
 
-    const distance = levenshtein(normalizedInput, normalizedCandidate);
+    const distance = editDistance(normalizedInput, normalizedCandidate);
 
     if (!best || distance < best.distance) {
       best = { display, distance };

@@ -271,6 +271,7 @@ export function isValidQuestion(q: Question): boolean {
   return true;
 }
 
+
 export function questionMatchesRequest(
   question: Question,
   request: QuizGenerationRequest
@@ -280,4 +281,39 @@ export function questionMatchesRequest(
   if (request.type !== "mixed" && question.type !== request.type) return false;
 
   return true;
+}
+
+export function parseFillInBlankGradeRequest(
+  body: unknown
+): ValidationResult<{ questionText: string; acceptableAnswers: string[]; userAnswer: string }> {
+  if (!isRecord(body)) {
+    return { ok: false, error: "Request body harus berupa JSON object." };
+  }
+
+  if (typeof body.questionText !== "string" || !body.questionText.trim()) {
+    return { ok: false, error: "questionText harus berupa teks yang tidak kosong." };
+  }
+
+  if (!isStringArray(body.acceptableAnswers) || body.acceptableAnswers.length === 0) {
+    return { ok: false, error: "acceptableAnswers harus berupa array teks yang tidak kosong." };
+  }
+
+  if (typeof body.userAnswer !== "string" || !body.userAnswer.trim()) {
+    return { ok: false, error: "userAnswer harus berupa teks yang tidak kosong." };
+  }
+
+  if (body.userAnswer.length > 200) {
+    return { ok: false, error: "userAnswer terlalu panjang." };
+  }
+
+  return {
+    ok: true,
+    data: {
+      questionText: body.questionText.trim(),
+      acceptableAnswers: body.acceptableAnswers
+        .map((a) => a.trim().toLowerCase())
+        .filter(Boolean),
+      userAnswer: body.userAnswer.trim()
+    }
+  };
 }

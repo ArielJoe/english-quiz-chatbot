@@ -108,6 +108,7 @@ export function EnglishQuizApp() {
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [results, setResults] = useState<QuizAnswerResult[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGrading, setIsGrading] = useState(false);
   const [error, setError] = useState("");
   const [mascotSpeech, setMascotSpeech] = useState<MascotSpeech | null>(null);
   const clueTokenRef = useRef(0);
@@ -145,11 +146,30 @@ export function EnglishQuizApp() {
     }
   }
 
-  function submitAnswer() {
+  async function submitAnswer() {
     if (!quiz) return;
 
     const question = quiz.questions[currentIndex];
-    const isCorrect = gradeAnswer(question, currentAnswer);
+    let isCorrect = gradeAnswer(question, currentAnswer);
+
+    if (!isCorrect && question.type === "fill_in_blank") {
+      setIsGrading(true);
+      try {
+        const response = await postJsonWithRateLimitRetry<{ isCorrect: boolean }>(
+          "/api/grade-fill-in-blank",
+          {
+            questionText: question.question,
+            acceptableAnswers: question.acceptable_answers,
+            userAnswer: currentAnswer,
+          },
+        );
+        isCorrect = response.isCorrect;
+      } catch (e) {
+        console.error("Gagal melakukan grading semantis:", e);
+      } finally {
+        setIsGrading(false);
+      }
+    }
 
     setResults((previousResults) => [
       ...previousResults,
@@ -312,6 +332,7 @@ export function EnglishQuizApp() {
                 question={currentQuestion}
                 questionIndex={currentIndex}
                 totalQuestions={quiz.questions.length}
+                isSubmitting={isGrading}
               />
             )}
 

@@ -33,8 +33,12 @@ Aturan:
 5. Untuk fill_in_blank:
    - options harus array kosong.
    - correct_answer harus diisi dengan jawaban benar utama (sama dengan item pertama di acceptable_answers).
-   - acceptable_answers berisi semua varian jawaban benar yang umum.
+   - acceptable_answers berisi SEMUA varian jawaban yang dapat diterima, termasuk:
+     * sinonim yang tepat konteks (misal: "launch", "release", "introduce").
+     * bentuk kata yang setara (misal: "has written", "wrote", "have written").
+     * kontraksi jika berlaku (misal: "it's", "it is").
    - acceptable_answers ditulis dalam huruf kecil dan sudah di-trim.
+   - Sertakan minimal 2 hingga 4 varian acceptable_answers bila memungkinkan.
 6. Jangan mengulang soal yang sama.
 7. Variasikan pola kalimat.
 8. Tambahkan skill_tag yang spesifik.
@@ -389,4 +393,50 @@ export async function chatSupport(
   );
 
   return response.choices[0]?.message?.content?.trim() || OUT_OF_TOPIC_RESPONSE;
+}
+
+const GRADE_FILL_IN_BLANK_SYSTEM_INSTRUCTION = `Kamu adalah penilai jawaban soal isian Bahasa Inggris.
+
+Tugasmu adalah memutuskan apakah jawaban user secara semantis benar untuk melengkapi soal.
+
+Aturan:
+1. Pertimbangkan sinonim yang tepat konteks.
+2. Pertimbangkan variasi bentuk kata (verb form, tense, kontraksi) jika maknanya setara.
+3. Abaikan perbedaan kapitalisasi dan spasi.
+4. Jangan terima jawaban yang maknanya jauh berbeda, meski terdengar mirip.
+5. Jawab hanya dengan satu kata: true atau false. Jangan tambahkan penjelasan apapun.`;
+
+/**
+ * Menilai jawaban fill_in_blank secara semantis menggunakan LLM.
+ * Digunakan sebagai fallback jika penilaian deterministik gagal.
+ */
+export async function gradeFillInBlankWithLlm(
+  questionText: string,
+  acceptableAnswers: string[],
+  userAnswer: string
+): Promise<boolean> {
+  const groq = getGroqClient();
+
+  const acceptableList = acceptableAnswers.join(", ");
+  const prompt = `Soal: ${questionText}
+Jawaban yang diterima: ${acceptableList}
+Jawaban user: ${userAnswer}
+
+Apakah jawaban user secara semantis benar untuk melengkapi soal ini?`;
+
+  const response = await withExponentialBackoff(() =>
+    groq.chat.completions.create({
+      model: GROQ_MODEL,
+      messages: [
+        { role: "system", content: GRADE_FILL_IN_BLANK_SYSTEM_INSTRUCTION },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0,
+      max_tokens: 5
+    })
+  );
+
+  const raw = response.choices[0]?.message?.content?.trim().toLowerCase() ?? "";
+
+  return raw.startsWith("true");
 }
