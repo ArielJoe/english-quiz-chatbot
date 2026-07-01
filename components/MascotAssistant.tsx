@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { FormattedMessage } from "@/components/FormattedMessage";
+
 export type MascotMood =
   | "idle"
   | "loading"
@@ -354,7 +356,9 @@ function CursorMascot({ message, mood }: { message: string; mood: MascotMood }) 
           >
             {styles.label}
           </span>
-          <p className="text-xs leading-snug text-slate-800">{message}</p>
+          <div className="text-xs leading-snug text-slate-800">
+            <FormattedMessage text={message} />
+          </div>
           <span className="absolute -bottom-1.5 right-5 h-3 w-3 rotate-45 border-b border-r border-slate-200 bg-white" />
         </div>
 

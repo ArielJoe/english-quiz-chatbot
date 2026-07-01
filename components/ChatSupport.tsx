@@ -1,7 +1,8 @@
 "use client";
 
-import { FormEvent, type ReactNode, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 
+import { FormattedMessage } from "@/components/FormattedMessage";
 import { postJsonWithRateLimitRetry } from "@/lib/http";
 import type { ChatQuizContext, Question } from "@/types/quiz";
 
@@ -33,88 +34,12 @@ function getErrorMessage(error: unknown): string {
   return "Chat gagal merespons. Silakan coba lagi.";
 }
 
-// Render inline **tebal** dan `kode` agar respons Lingo lebih rapi.
-function renderInline(text: string): ReactNode[] {
-  const nodes: ReactNode[] = [];
-  const pattern = /(\*\*[^*]+\*\*|`[^`]+`)/g;
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-  let key = 0;
-
-  while ((match = pattern.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      nodes.push(text.slice(lastIndex, match.index));
-    }
-
-    const token = match[0];
-
-    if (token.startsWith("**")) {
-      nodes.push(
-        <strong key={key++} className="font-semibold text-slate-900">
-          {token.slice(2, -2)}
-        </strong>
-      );
-    } else {
-      nodes.push(
-        <code
-          key={key++}
-          className="rounded bg-slate-100 px-1 py-0.5 text-[0.85em] font-medium text-slate-800"
-        >
-          {token.slice(1, -1)}
-        </code>
-      );
-    }
-
-    lastIndex = pattern.lastIndex;
-  }
-
-  if (lastIndex < text.length) {
-    nodes.push(text.slice(lastIndex));
-  }
-
-  return nodes;
-}
-
 function ChatMessageContent({ message }: { message: ChatMessage }) {
   if (message.role === "user") {
     return <span className="whitespace-pre-wrap">{message.text}</span>;
   }
 
-  const lines = message.text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  return (
-    <div className="space-y-1.5">
-      {lines.map((line, index) => {
-        const bulletMatch = line.match(/^[-*]\s+(.+)/);
-        const numberedMatch = line.match(/^(\d+)[.)]\s+(.+)/);
-
-        if (bulletMatch) {
-          return (
-            <div key={`${line}-${index}`} className="flex gap-2">
-              <span className="mt-[0.55rem] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
-              <span>{renderInline(bulletMatch[1])}</span>
-            </div>
-          );
-        }
-
-        if (numberedMatch) {
-          return (
-            <div key={`${line}-${index}`} className="flex gap-2">
-              <span className="shrink-0 font-bold text-brand-600">
-                {numberedMatch[1]}.
-              </span>
-              <span>{renderInline(numberedMatch[2])}</span>
-            </div>
-          );
-        }
-
-        return <p key={`${line}-${index}`}>{renderInline(line)}</p>;
-      })}
-    </div>
-  );
+  return <FormattedMessage text={message.text} />;
 }
 
 function toChatQuizContext(question: Question | null): ChatQuizContext | null {
