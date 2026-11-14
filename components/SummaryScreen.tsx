@@ -90,14 +90,11 @@ export function SummaryScreen({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-700">
-          Hasil Latihan
-        </p>
-        <h2 className="mt-2 text-3xl font-bold text-slate-950">
-          Skor Anda {score}
+        <h2 className="text-3xl font-bold text-slate-950">
+          Skor kamu {score}
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          Anda menjawab benar {correctCount} dari {quiz.questions.length} soal.
+          Kamu menjawab benar {correctCount} dari {quiz.questions.length} soal.
         </p>
       </div>
 
@@ -128,7 +125,7 @@ export function SummaryScreen({
               <div className="mt-4 rounded-md bg-slate-50 p-3 text-sm leading-6 text-slate-700">
                 <p>
                   <span className="font-semibold text-slate-950">
-                    Jawaban Anda:
+                    Jawaban kamu:
                   </span>{" "}
                   {result.userAnswer}
                 </p>
@@ -183,7 +180,7 @@ export function SummaryScreen({
 
         <div className="rounded-md border border-slate-200 bg-white p-4">
           <h3 className="text-sm font-bold text-slate-950">
-            Ringkasan kemampuan Anda
+            Ringkasan kemampuan kamu
           </h3>
           <div className="mt-3 grid gap-3">
             {skillStats.map((stat) => {

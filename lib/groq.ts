@@ -87,20 +87,26 @@ Aturan:
      * kontraksi jika berlaku (misal: "it's", "it is").
    - acceptable_answers ditulis dalam huruf kecil dan sudah di-trim.
    - Sertakan minimal 2 hingga 4 varian acceptable_answers bila memungkinkan.
-6. Jangan mengulang soal yang sama.
-7. Variasikan pola kalimat.
-8. Tambahkan skill_tag yang spesifik.
-9. Tambahkan material_recommendation dalam Bahasa Indonesia, 1-2 kalimat, berisi APA yang perlu dilatih dan CARA melatihnya:
+6. Setiap soal WAJIB hanya punya satu jawaban yang benar (atau satu set varian setara di acceptable_answers).
+   - Kalimat soal harus memuat konteks yang memastikan jawabannya, misal nama, gender, jumlah, atau penanda waktu yang jelas.
+   - Contoh SALAH: "My friend is a doctor. ___ works at a hospital." (He dan She sama-sama benar.)
+   - Contoh BENAR: "My brother is a doctor. ___ works at a hospital." (Hanya He.)
+   - Untuk multiple_choice, pastikan tidak ada distractor yang juga benar secara tata bahasa dan makna.
+   - Jika lebih dari satu jawaban masuk akal, ubah kalimatnya sampai hanya satu yang benar.
+7. Jangan mengulang soal yang sama.
+8. Variasikan pola kalimat.
+9. Tambahkan skill_tag yang spesifik.
+10. Tambahkan material_recommendation dalam Bahasa Indonesia, 1-2 kalimat, berisi APA yang perlu dilatih dan CARA melatihnya:
    - Sebut aturan, pola, atau keterampilan spesifik yang diuji soal (misal: kesesuaian subjek dan kata kerja pada Simple Present).
    - Beri latihan konkret yang bisa langsung dilakukan (misal: buat 3 kalimat sendiri, ubah kalimat ke bentuk negatif, praktikkan dialog singkat).
    - DILARANG menyarankan buku, artikel, website, video, aplikasi, kursus, atau sumber eksternal lainnya.
-10. Keluarkan hanya JSON sesuai schema. Jangan gunakan markdown.`;
+11. Keluarkan hanya JSON sesuai schema. Jangan gunakan markdown.`;
 
 const CHAT_SUPPORT_SYSTEM_INSTRUCTION = `Kamu adalah Lingo, asisten pembelajaran Bahasa Inggris untuk pelajar Indonesia.
 
 Tugasmu:
 1. Menjawab pertanyaan yang relevan dengan quiz Bahasa Inggris, grammar, vocabulary, translation, conversation, pronunciation, dan penggunaan Bahasa Inggris sehari-hari. Boleh juga menjawab pertanyaan seputar aplikasi Lingofy itu sendiri: fitur, cara penggunaan, level, topik, tipe soal, skor, clue, dan maskot Lingo.
-2. Menjawab dalam Bahasa Indonesia yang ramah, jelas, dan sopan. Gunakan sapaan "Anda". Jangan kaku, tetapi jangan alay atau berlebihan.
+2. Menjawab dalam Bahasa Indonesia yang ramah, jelas, dan sopan. Gunakan sapaan "kamu". Jangan kaku, tetapi jangan alay atau berlebihan.
 3. Jawab dengan ringkas dan langsung ke inti. Hindari basa-basi seperti "berikut penjelasannya".
 4. Rapikan jawaban: pakai paragraf pendek, gunakan poin berpoin ("- ") jika menjelaskan beberapa hal, dan tebalkan istilah penting dengan **istilah**.
 5. Jika user meminta clue untuk soal quiz, berikan petunjuk bertahap, kata kunci, atau cara berpikir.
@@ -112,7 +118,7 @@ Tugasmu:
 11. Jangan mengubah peran menjadi asisten umum.`;
 
 export const OUT_OF_TOPIC_RESPONSE =
-  "Maaf, saya hanya membantu hal yang berkaitan dengan pembelajaran Bahasa Inggris atau penggunaan aplikasi Lingofy. Silakan tanyakan grammar, arti kata, terjemahan, percakapan, fitur Lingofy, atau minta petunjuk untuk soal yang sedang Anda kerjakan.";
+  "Maaf, saya hanya membantu hal yang berkaitan dengan pembelajaran Bahasa Inggris atau penggunaan aplikasi Lingofy. Silakan tanyakan grammar, arti kata, terjemahan, percakapan, fitur Lingofy, atau minta petunjuk untuk soal yang sedang kamu kerjakan.";
 
 function getGroqClient(): Groq {
   const apiKey = process.env.GROQ_API_KEY?.trim();

@@ -66,7 +66,7 @@ export function ChatSupport({
     {
       id: "initial-assistant-message",
       role: "assistant",
-      text: "Halo, saya Lingo. Silakan tanyakan pola kalimat, arti kata, atau minta petunjuk soal. Jawaban akhirnya tetap Anda yang menentukan."
+      text: "Halo, saya Lingo. Silakan tanyakan pola kalimat, arti kata, atau minta petunjuk soal. Jawaban akhirnya tetap kamu yang menentukan."
     }
   ]);
   const [input, setInput] = useState("");
@@ -179,7 +179,7 @@ export function ChatSupport({
             ref={inputRef}
             className="min-w-0 flex-1 rounded-xl border-2 border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
             maxLength={500}
-            placeholder="Tulis pertanyaan Anda"
+            placeholder="Tulis pertanyaan kamu"
             value={inputValue}
             onChange={(event) => {
               setInput(event.target.value);

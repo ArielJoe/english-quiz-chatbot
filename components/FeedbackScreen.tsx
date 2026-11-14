@@ -81,20 +81,13 @@ export function FeedbackScreen({
             className="aspect-video w-full rounded-xl object-cover"
           />
           <div className="grid gap-3">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[0.18em]">
-                {isCorrect ? "Benar" : "Belum tepat"}
-              </p>
-              <h2 className="mt-2 text-2xl font-bold">
-                {isCorrect
-                  ? "Tepat! Jawaban Anda sudah benar."
-                  : "Belum tepat, tetapi Anda sudah di jalur yang benar."}
-              </h2>
-            </div>
+            <h2 className="text-2xl font-bold">
+              {isCorrect ? "Jawaban kamu benar." : "Jawaban kamu belum tepat."}
+            </h2>
 
             <div className="grid gap-1 text-sm leading-6">
               <p>
-                <span className="font-semibold">Jawaban Anda:</span>{" "}
+                <span className="font-semibold">Jawaban kamu:</span>{" "}
                 {userAnswer}
               </p>
               <p>

@@ -107,7 +107,7 @@ export function QuizScreen({
         </div>
       ) : (
         <label className="grid gap-2 text-sm font-semibold text-slate-800">
-          Tulis jawaban Anda
+          Tulis jawaban kamu
           <input
             className="rounded-xl border-2 border-slate-200 px-4 py-3 text-base text-slate-950 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200 disabled:opacity-60 disabled:cursor-not-allowed"
             placeholder="Ketik jawaban di sini"

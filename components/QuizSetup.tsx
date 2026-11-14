@@ -48,7 +48,7 @@ export function QuizSetup({
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-xl font-bold text-slate-950">
-          Apa yang ingin Anda latih hari ini?
+          Apa yang ingin kamu latih hari ini?
         </h2>
       </div>
 

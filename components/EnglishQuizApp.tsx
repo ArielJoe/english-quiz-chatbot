@@ -73,11 +73,11 @@ function getMascotMood(
 function getMascotMessage(mood: MascotMood): string {
   switch (mood) {
     case "loading":
-      return "Mohon tunggu sebentar, saya sedang menyiapkan soal untuk Anda.";
+      return "Mohon tunggu sebentar, saya sedang menyiapkan soal untuk kamu.";
     case "quiz":
       return "Jika menemui kesulitan, silakan minta clue. Saya akan memberi arah tanpa membocorkan jawaban.";
     case "correct":
-      return "Bagus, jawaban Anda tepat. Mari lanjutkan ke soal berikutnya.";
+      return "Bagus, jawaban kamu tepat. Mari lanjutkan ke soal berikutnya.";
     case "wrong":
       return "Belum tepat, tidak apa-apa. Cermati kembali kata kuncinya pada soal berikutnya.";
     case "summary":
@@ -282,7 +282,7 @@ export function EnglishQuizApp() {
         setMascotSpeech({
           mood: "quiz",
           source: "typo",
-          text: `Sepertinya ada salah ketik. Mungkin maksud Anda "${suggestion}"?`,
+          text: `Sepertinya ada salah ketik. Mungkin maksud kamu "${suggestion}"?`,
         });
       } else {
         setMascotSpeech((previous) =>
@@ -298,7 +298,7 @@ export function EnglishQuizApp() {
     <main className="flex min-h-screen flex-col px-4 pt-4 sm:px-6 lg:h-screen lg:overflow-hidden lg:px-8">
       <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-4 pb-4 lg:min-h-0">
         <header className="flex shrink-0 items-center gap-3 border-b border-slate-200 pb-4">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-500 text-xl font-black text-white shadow-[0_4px_0_#387f06]">
+          <span className="flex aspect-square h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-500 text-xl font-black leading-none text-white shadow-[0_4px_0_#387f06]">
             L
           </span>
           <div>

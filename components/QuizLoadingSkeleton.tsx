@@ -32,7 +32,7 @@ export function QuizLoadingSkeleton() {
 
       <div className="flex items-center gap-3 text-sm text-slate-600">
         <span className="mascot-blink h-2 w-2 rounded-full bg-brand-500" />
-        Menyiapkan soal untuk Anda...
+        Menyiapkan soal untuk kamu...
       </div>
     </div>
   );
