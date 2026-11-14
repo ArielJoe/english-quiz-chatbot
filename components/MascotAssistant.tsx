@@ -126,7 +126,7 @@ function MascotFace({ mood }: { mood: MascotMood }) {
     );
   }
 
-  // idle / loading / quiz / summary — wajah ramah netral
+  // idle / loading / quiz / summary - wajah ramah netral
   return (
     <g>
       <g className="mascot-blink">
@@ -346,7 +346,7 @@ function CursorMascot({ message, mood }: { message: string; mood: MascotMood }) 
       className="pointer-events-none fixed left-0 top-0 z-40 opacity-0 transition-opacity duration-300"
     >
       <div className="relative -translate-y-9 translate-x-4">
-        {/* Chat bubble — maskot seolah berbicara. */}
+        {/* Chat bubble - maskot seolah berbicara. */}
         <div
           key={message}
           className="mascot-pop absolute bottom-full right-2 mb-2 w-max max-w-[260px] rounded-2xl rounded-br-md border border-slate-200 bg-white px-3 py-2 text-left shadow-panel"

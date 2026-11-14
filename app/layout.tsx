@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Lingofy — Kuis Bahasa Inggris bareng Lingo",
+  title: "Lingofy - Kuis Bahasa Inggris bareng Lingo",
   description:
     "Lingofy: kuis Bahasa Inggris interaktif yang ditemani Lingo, maskot pintarmu, ditenagai Groq API."
 };

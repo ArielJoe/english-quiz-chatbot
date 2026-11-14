@@ -26,7 +26,7 @@ export function findTypoSuggestion(
       continue;
     }
 
-    // Sudah cocok persis dengan salah satu jawaban — bukan typo.
+    // Sudah cocok persis dengan salah satu jawaban - bukan typo.
     if (normalizedCandidate === normalizedInput) {
       return null;
     }
