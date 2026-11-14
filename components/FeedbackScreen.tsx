@@ -34,7 +34,7 @@ export function FeedbackScreen({
   onNext,
   result
 }: FeedbackScreenProps) {
-  const { question, userAnswer, isCorrect } = result;
+  const { question, userAnswer, isCorrect, typoOf } = result;
   const [gifUrl, setGifUrl] = useState(() =>
     pickRandom(isCorrect ? correctFallback : wrongFallback)
   );
@@ -101,6 +101,13 @@ export function FeedbackScreen({
                 <span className="font-semibold">Jawaban tepat:</span>{" "}
                 {question.correct_answer}
               </p>
+              {typoOf && (
+                <p>
+                  <span className="font-semibold">Perhatikan ejaan:</span>{" "}
+                  ada salah ketik kecil, tetap dihitung benar. Ejaan yang tepat:{" "}
+                  <span className="font-semibold">{typoOf}</span>
+                </p>
+              )}
               <p>
                 <span className="font-semibold">Penjelasan:</span>{" "}
                 {question.explanation}

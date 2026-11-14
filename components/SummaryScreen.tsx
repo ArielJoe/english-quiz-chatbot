@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { formatSkillTag } from "@/lib/format";
 import type { Quiz, QuizAnswerResult } from "@/types/quiz";
 
 interface SummaryScreenProps {
@@ -25,7 +26,7 @@ function getWeaknessSummary(results: QuizAnswerResult[]): string[] {
 
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1])
-    .map(([skill, count]) => `${skill.replace(/_/g, " ")} (${count} salah)`);
+    .map(([skill, count]) => `${formatSkillTag(skill)} (${count} salah)`);
 }
 
 interface SkillStat {
@@ -193,7 +194,7 @@ export function SummaryScreen({
                 <div key={stat.skill} className="grid gap-1">
                   <div className="flex items-center justify-between gap-3 text-xs text-slate-600">
                     <span className="font-semibold text-slate-800">
-                      {stat.skill.replace(/_/g, " ")}
+                      {formatSkillTag(stat.skill)}
                     </span>
                     <span>
                       {stat.correct}/{stat.total}

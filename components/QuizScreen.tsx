@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 
+import { formatSkillTag } from "@/lib/format";
 import type { Question } from "@/types/quiz";
 
 interface QuizScreenProps {
@@ -69,7 +70,7 @@ export function QuizScreen({
             Nomor {questionIndex + 1} dari {totalQuestions}
           </p>
           <span className="rounded-md bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700">
-            {question.skill_tag.replace(/_/g, " ")}
+            {formatSkillTag(question.skill_tag)}
           </span>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-slate-100">

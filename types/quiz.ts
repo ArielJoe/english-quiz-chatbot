@@ -54,6 +54,8 @@ export interface QuizAnswerResult {
   question: Question;
   userAnswer: string;
   isCorrect: boolean;
+  /** Diisi jika jawaban diterima meski ada salah ketik kecil. */
+  typoOf?: string;
 }
 
 export interface ChatQuizContext {

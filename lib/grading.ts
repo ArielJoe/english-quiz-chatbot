@@ -9,7 +9,8 @@ export function normalizeAnswer(answer: string): string {
 }
 
 /**
- * Jarak edit Levenshtein antara dua string.
+ * Jarak edit Damerau-Levenshtein (optimal string alignment) antara dua string.
+ * Pertukaran dua huruf bersebelahan ("teh" -> "the") dihitung 1 kesalahan.
  * Disimpan di sini untuk menghindari circular dependency dengan lib/typo.ts.
  */
 export function editDistance(a: string, b: string): number {
@@ -19,35 +20,78 @@ export function editDistance(a: string, b: string): number {
   if (m === 0) return n;
   if (n === 0) return m;
 
-  const row = Array.from({ length: n + 1 }, (_, i) => i);
+  const d: number[][] = Array.from({ length: m + 1 }, (_, i) =>
+    Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+  );
 
   for (let i = 1; i <= m; i += 1) {
-    let prev = row[0];
-    row[0] = i;
-
     for (let j = 1; j <= n; j += 1) {
-      const tmp = row[j];
-      row[j] = Math.min(
-        row[j] + 1,
-        row[j - 1] + 1,
-        prev + (a[i - 1] === b[j - 1] ? 0 : 1)
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(
+        d[i - 1][j] + 1,
+        d[i][j - 1] + 1,
+        d[i - 1][j - 1] + cost
       );
-      prev = tmp;
+
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
     }
   }
 
-  return row[n];
+  return d[m][n];
+}
+
+function sortLetters(value: string): string {
+  return [...value].sort().join("");
+}
+
+// Akhiran infleksi: beda di sini biasanya kesalahan grammar, bukan salah ketik.
+const INFLECTION_SUFFIXES = ["s", "es", "ed", "d", "ing", "er", "est", "ly"];
+
+function differsOnlyByInflection(a: string, b: string): boolean {
+  const [shorter, longer] = a.length <= b.length ? [a, b] : [b, a];
+
+  return (
+    longer.startsWith(shorter) &&
+    INFLECTION_SUFFIXES.includes(longer.slice(shorter.length))
+  );
 }
 
 /**
- * Batas maksimum jarak edit yang masih dianggap typo.
- * Kata sangat pendek (≤ 3 huruf) tidak ditoleransi karena
- * satu huruf beda sudah bisa menjadi kata yang berbeda.
+ * Apakah jawaban pengguna cukup dekat dengan jawaban benar untuk dianggap typo.
+ * - 1-2 huruf: harus persis.
+ * - 3-4 huruf: hanya pertukaran huruf ("teh" -> "the"), karena ganti satu huruf
+ *   sudah bisa menjadi kata lain ("went" -> "want").
+ * - 5-7 huruf: maksimal 1 kesalahan.
+ * - 8+ huruf: maksimal 2 kesalahan.
+ * Beda akhiran infleksi ("drink" vs "drinks") tidak pernah dianggap typo.
  */
-function typoThreshold(answerLength: number): number {
-  if (answerLength <= 3) return 0;
-  if (answerLength <= 6) return 1;
-  return 2;
+export function isMinorTypo(userAnswer: string, correctAnswer: string): boolean {
+  const user = normalizeAnswer(userAnswer);
+  const correct = normalizeAnswer(correctAnswer);
+
+  if (!user || !correct || user === correct) return false;
+  if (correct.length <= 2) return false;
+  if (differsOnlyByInflection(user, correct)) return false;
+
+  const distance = editDistance(user, correct);
+
+  if (correct.length <= 4) {
+    return (
+      distance === 1 &&
+      user.length === correct.length &&
+      sortLetters(user) === sortLetters(correct)
+    );
+  }
+  if (correct.length <= 7) return distance <= 1;
+  return distance <= 2;
+}
+
+export interface GradeResult {
+  isCorrect: boolean;
+  /** Jawaban benar yang dimaksud jika diterima karena typo kecil. */
+  typoOf?: string;
 }
 
 export function gradeMultipleChoice(
@@ -57,29 +101,46 @@ export function gradeMultipleChoice(
   return userAnswer === question.correct_answer;
 }
 
+function fillInBlankCandidates(question: Question): string[] {
+  return [question.correct_answer, ...question.acceptable_answers].filter(
+    (answer) => answer.trim().length > 0
+  );
+}
+
+export function gradeFillInBlankDetailed(
+  question: Question,
+  userAnswer: string
+): GradeResult {
+  const normalizedUser = normalizeAnswer(userAnswer);
+  const candidates = fillInBlankCandidates(question);
+
+  // Lapis 1: exact match setelah normalisasi.
+  if (candidates.some((answer) => normalizeAnswer(answer) === normalizedUser)) {
+    return { isCorrect: true };
+  }
+
+  // Lapis 2: toleransi typo kecil.
+  const typoOf = candidates.find((answer) => isMinorTypo(userAnswer, answer));
+
+  return typoOf ? { isCorrect: true, typoOf: typoOf.trim() } : { isCorrect: false };
+}
+
 export function gradeFillInBlank(
   question: Question,
   userAnswer: string
 ): boolean {
-  const normalizedUser = normalizeAnswer(userAnswer);
+  return gradeFillInBlankDetailed(question, userAnswer).isCorrect;
+}
 
-  // Lapis 1: exact match setelah normalisasi.
-  const exactMatch = question.acceptable_answers.some(
-    (answer) => normalizeAnswer(answer) === normalizedUser
-  );
+export function gradeAnswerDetailed(
+  question: Question,
+  userAnswer: string
+): GradeResult {
+  if (question.type === "multiple_choice") {
+    return { isCorrect: gradeMultipleChoice(question, userAnswer) };
+  }
 
-  if (exactMatch) return true;
-
-  // Lapis 2: toleransi typo menggunakan jarak edit Levenshtein.
-  return question.acceptable_answers.some((answer) => {
-    const normalizedAnswer = normalizeAnswer(answer);
-    const maxAllowed = typoThreshold(normalizedAnswer.length);
-
-    // Jangan toleransi typo jika threshold-nya 0 (kata terlalu pendek).
-    if (maxAllowed === 0) return false;
-
-    return editDistance(normalizedUser, normalizedAnswer) <= maxAllowed;
-  });
+  return gradeFillInBlankDetailed(question, userAnswer);
 }
 
 export function gradeAnswer(question: Question, userAnswer: string): boolean {

@@ -12,7 +12,7 @@ import { QuizLoadingSkeleton } from "@/components/QuizLoadingSkeleton";
 import { QuizScreen } from "@/components/QuizScreen";
 import { QuizSetup } from "@/components/QuizSetup";
 import { SummaryScreen } from "@/components/SummaryScreen";
-import { gradeAnswer } from "@/lib/grading";
+import { gradeAnswerDetailed } from "@/lib/grading";
 import { postJson, postJsonWithRateLimitRetry } from "@/lib/http";
 import { findTypoSuggestion } from "@/lib/typo";
 import type {
@@ -150,7 +150,8 @@ export function EnglishQuizApp() {
     if (!quiz) return;
 
     const question = quiz.questions[currentIndex];
-    let isCorrect = gradeAnswer(question, currentAnswer);
+    const grade = gradeAnswerDetailed(question, currentAnswer);
+    let isCorrect = grade.isCorrect;
 
     if (!isCorrect && question.type === "fill_in_blank") {
       setIsGrading(true);
@@ -177,6 +178,7 @@ export function EnglishQuizApp() {
         question,
         userAnswer: currentAnswer,
         isCorrect,
+        typoOf: grade.typoOf,
       },
     ]);
     clearMascotSpeech();

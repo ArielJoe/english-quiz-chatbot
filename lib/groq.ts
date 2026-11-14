@@ -90,7 +90,10 @@ Aturan:
 6. Jangan mengulang soal yang sama.
 7. Variasikan pola kalimat.
 8. Tambahkan skill_tag yang spesifik.
-9. Tambahkan material_recommendation dalam Bahasa Indonesia.
+9. Tambahkan material_recommendation dalam Bahasa Indonesia, 1-2 kalimat, berisi APA yang perlu dilatih dan CARA melatihnya:
+   - Sebut aturan, pola, atau keterampilan spesifik yang diuji soal (misal: kesesuaian subjek dan kata kerja pada Simple Present).
+   - Beri latihan konkret yang bisa langsung dilakukan (misal: buat 3 kalimat sendiri, ubah kalimat ke bentuk negatif, praktikkan dialog singkat).
+   - DILARANG menyarankan buku, artikel, website, video, aplikasi, kursus, atau sumber eksternal lainnya.
 10. Keluarkan hanya JSON sesuai schema. Jangan gunakan markdown.`;
 
 const CHAT_SUPPORT_SYSTEM_INSTRUCTION = `Kamu adalah Lingo, asisten pembelajaran Bahasa Inggris untuk pelajar Indonesia.
@@ -212,7 +215,7 @@ Format JSON:
       "acceptable_answers": [],
       "explanation": "Penjelasan Bahasa Indonesia",
       "skill_tag": "specific_skill_tag",
-      "material_recommendation": "Rekomendasi Bahasa Indonesia"
+      "material_recommendation": "Apa yang perlu dilatih dan cara melatihnya, Bahasa Indonesia"
     }
   ]
 }
