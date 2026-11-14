@@ -49,6 +49,12 @@ Pilih environment yang digunakan, misalnya **Production** dan **Preview**, lalu 
 
 Gunakan nama variabel persis seperti di atas tanpa prefix `NEXT_PUBLIC_`. File `.env` lokal tidak ikut diunggah melalui Git karena sudah diabaikan; isi nilai variabel secara terpisah di Vercel. Untuk lokal, restart `npm run dev` setelah mengubah `.env`.
 
+### Jika production menampilkan API key tidak valid
+
+Pesan ini muncul ketika Groq menolak kredensial, bukan ketika model tidak tersedia. Periksa apakah key masih aktif di [Groq Console](https://console.groq.com/keys). Jika ditolak juga saat dipakai lokal, ganti dengan key aktif yang baru.
+
+Di Vercel, isi Value `GROQ_API_KEY` dengan nilai key saja, tanpa tanda kutip, awalan `Bearer`, atau teks `GROQ_API_KEY=`. Pastikan variabel diterapkan ke environment **Production** pada project yang benar. Setelah menyimpan, redeploy deployment terbaru dan buka domain production yang menunjuk ke deployment baru. Deployment lama tetap memakai konfigurasi lamanya. Jangan membagikan key melalui pesan atau memasukkannya ke Git.
+
 ## Keamanan API Key
 
 - Groq hanya dipanggil dari Route Handler di `app/api/...`.

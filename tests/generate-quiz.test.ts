@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { afterEach, beforeEach, mock, test } from "node:test";
 
 import { POST } from "@/app/api/generate-quiz/route";
+import { POST as chatPOST } from "@/app/api/chat-support/route";
 import { chatSupport, generateQuiz, gradeFillInBlankWithLlm, QuizGenerationError } from "@/lib/groq";
 import { gradeAnswer } from "@/lib/grading";
 import { ApiClientError, postJson } from "@/lib/http";
@@ -19,10 +20,12 @@ const question: Question = {
 
 const originalKey = process.env.GROQ_API_KEY;
 const originalModel = process.env.GROQ_MODEL;
+const originalVercelEnv = process.env.VERCEL_ENV;
 
 beforeEach(() => {
   process.env.GROQ_API_KEY = "test-key";
   delete process.env.GROQ_MODEL;
+  delete process.env.VERCEL_ENV;
 });
 
 afterEach(() => {
@@ -31,6 +34,8 @@ afterEach(() => {
   else process.env.GROQ_API_KEY = originalKey;
   if (originalModel === undefined) delete process.env.GROQ_MODEL;
   else process.env.GROQ_MODEL = originalModel;
+  if (originalVercelEnv === undefined) delete process.env.VERCEL_ENV;
+  else process.env.VERCEL_ENV = originalVercelEnv;
 });
 
 function completion(content = JSON.stringify({ questions: [question] }), finishReason = "stop") {
@@ -186,6 +191,22 @@ test("invalid API keys are not retried and provider details remain private", asy
   assert.match(body, /API key Groq tidak valid/);
   assert.doesNotMatch(body, /test-key/);
   assert.equal(fetchMock.mock.callCount(), 1);
+});
+
+test("production authentication errors direct quiz and chat users to redeploy", async () => {
+  process.env.VERCEL_ENV = "production";
+  const fetchMock = mock.method(globalThis, "fetch", async () => Response.json({
+    error: { code: "invalid_api_key", message: "Invalid API key: test-key" }
+  }, { status: 401 }));
+
+  for (const response of [await POST(request()), await chatPOST(request({ message: "Apa itu grammar?" }))]) {
+    assert.equal(response.status, 502);
+    const body = await response.text();
+    assert.match(body, /Production di Vercel/);
+    assert.match(body, /redeploy/);
+    assert.doesNotMatch(body, /restart dev server|test-key/);
+  }
+  assert.equal(fetchMock.mock.callCount(), 2);
 });
 
 test("semantic grading allows reasoning tokens before the final boolean answer", async () => {

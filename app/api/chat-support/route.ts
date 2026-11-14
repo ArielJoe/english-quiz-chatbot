@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { chatSupport } from "@/lib/groq";
+import { chatSupport, getGroqApiKeyErrorMessage } from "@/lib/groq";
 import { isInvalidApiKeyError, isRateLimitError } from "@/lib/retry";
 import { parseChatRequest } from "@/lib/validation";
 
@@ -49,8 +49,7 @@ export async function POST(request: Request) {
     if (isInvalidApiKeyError(error)) {
       return NextResponse.json(
         {
-          error:
-            "API key Groq tidak valid. Periksa nilai GROQ_API_KEY di file environment server, lalu restart dev server."
+          error: getGroqApiKeyErrorMessage()
         },
         { status: 502 }
       );

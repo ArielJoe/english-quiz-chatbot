@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Groq from "groq-sdk";
 
-import { generateQuiz, getGroqErrorCode, QuizGenerationError } from "@/lib/groq";
+import { generateQuiz, getGroqApiKeyErrorMessage, getGroqErrorCode, QuizGenerationError } from "@/lib/groq";
 import { isInvalidApiKeyError, isRateLimitError } from "@/lib/retry";
 import { parseQuizRequest } from "@/lib/validation";
 
@@ -48,8 +48,7 @@ export async function POST(request: Request) {
     if (isInvalidApiKeyError(error)) {
       return NextResponse.json(
         {
-          error:
-            "API key Groq tidak valid. Periksa nilai GROQ_API_KEY di file environment server, lalu restart dev server."
+          error: getGroqApiKeyErrorMessage()
         },
         { status: 502 }
       );

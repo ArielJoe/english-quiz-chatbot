@@ -38,6 +38,14 @@ export class QuizGenerationError extends Error {
   }
 }
 
+export function getGroqApiKeyErrorMessage(): string {
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV) {
+    return "API key Groq tidak valid. Perbarui GROQ_API_KEY pada environment deployment yang digunakan (Production di Vercel), lalu redeploy aplikasi.";
+  }
+
+  return "API key Groq tidak valid. Periksa nilai GROQ_API_KEY di file environment server, lalu restart dev server.";
+}
+
 function isJsonGenerationError(error: unknown): boolean {
   return getGroqErrorCode(error) === "json_validate_failed";
 }
