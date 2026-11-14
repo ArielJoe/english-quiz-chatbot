@@ -13,7 +13,7 @@ import { QuizScreen } from "@/components/QuizScreen";
 import { QuizSetup } from "@/components/QuizSetup";
 import { SummaryScreen } from "@/components/SummaryScreen";
 import { gradeAnswer } from "@/lib/grading";
-import { postJsonWithRateLimitRetry } from "@/lib/http";
+import { postJson, postJsonWithRateLimitRetry } from "@/lib/http";
 import { findTypoSuggestion } from "@/lib/typo";
 import type {
   ChatQuizContext,
@@ -125,7 +125,7 @@ export function EnglishQuizApp() {
     clearMascotSpeech();
 
     try {
-      const generatedQuiz = await postJsonWithRateLimitRetry<Quiz>(
+      const generatedQuiz = await postJson<Quiz>(
         "/api/generate-quiz",
         config,
       );

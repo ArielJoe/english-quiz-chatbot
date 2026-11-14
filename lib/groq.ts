@@ -1,6 +1,6 @@
 import Groq from "groq-sdk";
 
-import { withExponentialBackoff } from "@/lib/retry";
+import { isTransientServiceError, sleep, withExponentialBackoff } from "@/lib/retry";
 import {
   coerceQuestion,
   isValidQuestion,
@@ -13,7 +13,47 @@ import type {
   QuizGenerationRequest
 } from "@/types/quiz";
 
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+const DEFAULT_GROQ_MODEL = "openai/gpt-oss-20b";
+
+function getGroqModel(): string {
+  return process.env.GROQ_MODEL?.trim() || DEFAULT_GROQ_MODEL;
+}
+
+function getGroqModelSettings() {
+  const model = getGroqModel();
+
+  return {
+    model,
+    // Parameter reasoning hanya dikirim ke model yang mendukungnya.
+    ...(["openai/gpt-oss-20b", "openai/gpt-oss-120b"].includes(model)
+      ? { reasoning_effort: "low" as const, include_reasoning: false }
+      : {})
+  };
+}
+
+export class QuizGenerationError extends Error {
+  constructor() {
+    super("Belum berhasil menghasilkan soal yang valid. Silakan coba lagi.");
+    this.name = "QuizGenerationError";
+  }
+}
+
+function isJsonGenerationError(error: unknown): boolean {
+  return getGroqErrorCode(error) === "json_validate_failed";
+}
+
+export function getGroqErrorCode(error: unknown): string | undefined {
+  if (!(error instanceof Groq.APIError)) return undefined;
+
+  const body: unknown = error.error;
+  if (typeof body !== "object" || body === null) return undefined;
+  const details = "error" in body ? body.error : body;
+  if (typeof details !== "object" || details === null) return undefined;
+
+  return "code" in details && typeof details.code === "string"
+    ? details.code
+    : undefined;
+}
 
 const GENERATE_QUIZ_SYSTEM_INSTRUCTION = `Kamu adalah generator soal pembelajaran Bahasa Inggris untuk pelajar Indonesia.
 
@@ -64,13 +104,14 @@ export const OUT_OF_TOPIC_RESPONSE =
   "Maaf, saya hanya membantu hal yang berkaitan dengan pembelajaran Bahasa Inggris atau penggunaan aplikasi Lingofy. Silakan tanyakan grammar, arti kata, terjemahan, percakapan, fitur Lingofy, atau minta petunjuk untuk soal yang sedang Anda kerjakan.";
 
 function getGroqClient(): Groq {
-  const apiKey = process.env.GROQ_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY?.trim();
 
   if (!apiKey) {
     throw new Error("GROQ_API_KEY belum dikonfigurasi.");
   }
 
-  return new Groq({ apiKey });
+  // Retry diatur oleh aplikasi agar tidak bertumpuk dengan retry bawaan SDK.
+  return new Groq({ apiKey, maxRetries: 0, timeout: 20_000 });
 }
 
 function stripMarkdownFence(text: string): string {
@@ -92,15 +133,24 @@ function parseJsonSafely(text: string): unknown {
     const firstArray = cleaned.indexOf("[");
     const lastArray = cleaned.lastIndexOf("]");
 
-    if (firstArray !== -1 && lastArray > firstArray) {
-      return JSON.parse(cleaned.slice(firstArray, lastArray + 1));
+    const candidates = [
+      firstObject !== -1 && lastObject > firstObject
+        ? cleaned.slice(firstObject, lastObject + 1)
+        : "",
+      firstArray !== -1 && lastArray > firstArray
+        ? cleaned.slice(firstArray, lastArray + 1)
+        : ""
+    ];
+
+    for (const candidate of candidates) {
+      try {
+        return JSON.parse(candidate);
+      } catch {
+        // Coba bentuk JSON berikutnya sebelum meminta batch pengganti.
+      }
     }
 
-    if (firstObject !== -1 && lastObject > firstObject) {
-      return JSON.parse(cleaned.slice(firstObject, lastObject + 1));
-    }
-
-    throw new Error("Groq tidak mengembalikan JSON yang valid.");
+    throw new QuizGenerationError();
   }
 }
 
@@ -295,17 +345,18 @@ export async function generateQuiz(
   const seenQuestions = new Set<string>();
   let attempts = 0;
 
-  while (acceptedQuestions.length < request.count && attempts < 4) {
+  while (acceptedQuestions.length < request.count && attempts < 3) {
     attempts += 1;
     const remainingRequest = {
       ...request,
-      // Minta sedikit lebih banyak sebagai buffer terhadap soal yang ditolak.
-      count: request.count - acceptedQuestions.length + 1
+      count: request.count - acceptedQuestions.length
     };
 
-    const response = await withExponentialBackoff(() =>
-      groq.chat.completions.create({
-        model: GROQ_MODEL,
+    let questions: unknown[];
+
+    try {
+      const response = await groq.chat.completions.create({
+        ...getGroqModelSettings(),
         messages: [
           { role: "system", content: GENERATE_QUIZ_SYSTEM_INSTRUCTION },
           {
@@ -317,13 +368,31 @@ export async function generateQuiz(
           }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.7
-      })
-    );
+        // Sisakan ruang reasoning, lalu batasi output sesuai jumlah soal.
+        max_completion_tokens: 1024 + remainingRequest.count * 500,
+        temperature: 0.4
+      });
 
-    const text = response.choices[0]?.message?.content ?? "";
-    const payload = parseJsonSafely(text);
-    const questions = extractQuestions(payload);
+      if (response.choices[0]?.finish_reason === "length") {
+        throw new QuizGenerationError();
+      }
+
+      const text = response.choices[0]?.message?.content ?? "";
+      questions = extractQuestions(parseJsonSafely(text));
+    } catch (error) {
+      const invalidOutput = error instanceof QuizGenerationError || isJsonGenerationError(error);
+
+      if (!invalidOutput && !isTransientServiceError(error)) {
+        throw error;
+      }
+
+      if (attempts === 3) {
+        throw invalidOutput ? new QuizGenerationError() : error;
+      }
+
+      await sleep(1000 * 2 ** (attempts - 1));
+      continue;
+    }
 
     for (const rawQuestion of questions) {
       const question = coerceQuestion(rawQuestion);
@@ -349,10 +418,8 @@ export async function generateQuiz(
     }
   }
 
-  if (acceptedQuestions.length === 0) {
-    throw new Error(
-      "Belum berhasil menghasilkan soal yang valid. Silakan coba lagi."
-    );
+  if (acceptedQuestions.length < request.count) {
+    throw new QuizGenerationError();
   }
 
   return {
@@ -383,12 +450,13 @@ export async function chatSupport(
 
   const response = await withExponentialBackoff(() =>
     groq.chat.completions.create({
-      model: GROQ_MODEL,
+      ...getGroqModelSettings(),
       messages: [
         { role: "system", content: CHAT_SUPPORT_SYSTEM_INSTRUCTION },
         { role: "user", content: buildChatPrompt(message, quizContext) }
       ],
-      temperature: 0.4
+      temperature: 0.4,
+      max_completion_tokens: 1024
     })
   );
 
@@ -426,13 +494,14 @@ Apakah jawaban user secara semantis benar untuk melengkapi soal ini?`;
 
   const response = await withExponentialBackoff(() =>
     groq.chat.completions.create({
-      model: GROQ_MODEL,
+      ...getGroqModelSettings(),
       messages: [
         { role: "system", content: GRADE_FILL_IN_BLANK_SYSTEM_INSTRUCTION },
         { role: "user", content: prompt }
       ],
       temperature: 0,
-      max_tokens: 5
+      // Model reasoning membutuhkan token untuk berpikir sebelum jawaban final.
+      max_completion_tokens: 1024
     })
   );
 

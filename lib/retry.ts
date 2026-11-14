@@ -57,13 +57,31 @@ export function isInvalidApiKeyError(error: unknown): boolean {
   );
 }
 
+export function isTransientServiceError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+
+  const { status, constructor } = error as {
+    status?: number;
+    constructor?: { name?: string };
+  };
+
+  return (
+    isRateLimitError(error) ||
+    status === 408 ||
+    status === 409 ||
+    (typeof status === "number" && status >= 500) ||
+    constructor?.name === "APIConnectionError" ||
+    constructor?.name === "APIConnectionTimeoutError"
+  );
+}
+
 export async function withExponentialBackoff<T>(
   operation: () => Promise<T>,
   options: RetryOptions = {}
 ): Promise<T> {
   const retries = options.retries ?? 3;
   const delaysMs = options.delaysMs ?? [1000, 2000, 4000];
-  const shouldRetry = options.shouldRetry ?? isRateLimitError;
+  const shouldRetry = options.shouldRetry ?? isTransientServiceError;
   let lastError: unknown;
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {

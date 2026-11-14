@@ -10,7 +10,7 @@ export class ApiClientError extends Error {
   }
 }
 
-async function postJson<T>(url: string, payload: unknown): Promise<T> {
+export async function postJson<T>(url: string, payload: unknown): Promise<T> {
   const response = await fetch(url, {
     method: "POST",
     headers: {

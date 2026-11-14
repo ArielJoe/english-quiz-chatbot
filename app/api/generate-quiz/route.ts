@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import Groq from "groq-sdk";
 
-import { generateQuiz } from "@/lib/groq";
+import { generateQuiz, getGroqErrorCode, QuizGenerationError } from "@/lib/groq";
 import { isInvalidApiKeyError, isRateLimitError } from "@/lib/retry";
 import { parseQuizRequest } from "@/lib/validation";
 
 export const runtime = "nodejs";
+export const maxDuration = 90;
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -53,11 +55,29 @@ export async function POST(request: Request) {
       );
     }
 
-    if (
-      error instanceof Error &&
-      error.message.includes("soal yang valid")
-    ) {
+    if (error instanceof QuizGenerationError) {
       return NextResponse.json({ error: error.message }, { status: 502 });
+    }
+
+    if (error instanceof Groq.APIError && (error.status === 404 || getGroqErrorCode(error) === "model_decommissioned")) {
+      return NextResponse.json(
+        { error: "Model Groq tidak tersedia. Periksa GROQ_MODEL di konfigurasi server dan gunakan model yang masih aktif." },
+        { status: 503 }
+      );
+    }
+
+    if (error instanceof Groq.APIConnectionTimeoutError) {
+      return NextResponse.json(
+        { error: "Pembuatan soal terlalu lama. Silakan coba lagi sebentar lagi." },
+        { status: 504 }
+      );
+    }
+
+    if (error instanceof Groq.APIConnectionError) {
+      return NextResponse.json(
+        { error: "Server belum dapat terhubung ke Groq. Periksa koneksi server, lalu coba lagi." },
+        { status: 503 }
+      );
     }
 
     return NextResponse.json(

@@ -1,5 +1,23 @@
 # Evaluasi English Quiz Chatbot
 
+## Verifikasi Model Hemat (14 November 2026)
+
+- Model default dan `.env` menggunakan `openai/gpt-oss-20b`, dengan konfigurasi Vercel yang sama di `.env.example` dan README. Kedua API key yang sudah ada tetap dipertahankan.
+- Model tersedia pada daftar model akun Groq dan mendukung JSON. Tarif standar yang dipublikasikan saat verifikasi: US$0,075 per 1 juta token input dan US$0,30 per 1 juta token output, sekitar 50% lebih rendah per token daripada GPT-OSS 120B. Sumber: [Groq GPT-OSS 20B](https://console.groq.com/docs/model/openai/gpt-oss-20b) dan [120B](https://console.groq.com/docs/model/openai/gpt-oss-120b).
+- GPT-OSS memakai reasoning `low`. Batas output per panggilan kuis adalah `1024 + jumlah soal yang diminta × 500` token; chat dan grading maksimal 1024 token. Batas mencakup reasoning dan tidak berarti seluruh token selalu digunakan.
+- Uji langsung: 5 soal beginner grammar multiple choice, 5 soal intermediate vocabulary fill in the blank, dan 10 soal advanced translation mixed berhasil. Seluruh 20 soal lolos validasi kontrak data dan kesesuaian request; mixed berisi kedua tipe soal.
+- Uji langsung chat menghasilkan respons; grading menerima jawaban benar dan menolak jawaban salah.
+- Verifikasi tersebut memeriksa integrasi dan struktur data; kualitas pedagogis seluruh soal belum ditinjau secara manual. Penghematan tagihan aktual bergantung pada token, retry, dan paket akun.
+
+## Verifikasi Perbaikan Generate Soal (14 November 2026)
+
+- Penyebab terverifikasi: Groq menolak model lama `llama-3.3-70b-versatile` dengan HTTP 404 `model_not_found`.
+- Model pengganti `openai/gpt-oss-120b` terdaftar pada API models akun yang digunakan.
+- Uji langsung Groq: masing-masing 5 soal beginner grammar untuk multiple choice, fill in the blank, dan mixed berhasil; seluruh soal lolos validasi struktur, level, topik, dan tipe. Mode mixed berisi kedua tipe soal.
+- Uji langsung chat: respons pembelajaran tersedia. Grading isian dengan model pengganti menerima jawaban benar dan menolak jawaban salah setelah batas token disesuaikan.
+- Tes regresi otomatis mencakup pemilihan model, retry JSON rusak, JSON validation error dari Groq, output terpotong, kelengkapan batch, model tidak tersedia, gangguan layanan, rate limit, validasi request, keamanan error API key, dan grading deterministik.
+- Uji langsung ini memeriksa integrasi dan kontrak data; belum merupakan penilaian manual menyeluruh atas kualitas pedagogis soal atau pengujian tampilan browser. Status evaluasi manual di bawah tetap berlaku.
+
 ## 12.1 Contoh Soal Manual
 
 1. Beginner grammar: Choose the correct sentence. Options: "She likes tea.", "She like tea.", "She liking tea.", "She liked tea now." Correct: "She likes tea."
